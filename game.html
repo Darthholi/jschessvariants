@@ -1,0 +1,1286 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs">
+<HEAD>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1250" />
+
+<meta http-equiv="Content-Language" content="cs" />
+
+<SCRIPT LANGUAGE="JavaScript" SRC="TBoard.js"></SCRIPT>
+<script>
+/*
+info momentalni tah a hrac na tahu,  
+*/
+//pocatecni inicializace
+var SelectionX=-1;
+var SelectionY=-1;
+var Board=new TBoard();
+Board.BeginGame();
+var Waiting=false;
+var Moving=false;
+var lang='cz';
+
+//nastaveni UI
+Board.MaxTime=30000;
+Board.MaxDepth=6;
+var CheckEndFunc;
+
+//nastaveni animaci:
+var Animtime=1000.0;
+var AnimDelay=100.0;
+// pocitac hraje za hrace: (2==nehraje)
+var Comp=1;
+
+//
+var Texts=new Array();
+Texts['remis']=new Array();
+Texts['remis']['cz']="Hra zkončila remízou";
+Texts['remis']['sk']="Hra zkončila remízou";
+Texts['remis']['en']="The game ended with remis";
+Texts['remis']['de']="Remisen";
+Texts['PvEWin']=new Array();
+Texts['PvEWin']['cz']="Vyhrál jste!";
+Texts['PvEWin']['sk']="Vyhrál jste!";
+Texts['PvEWin']['en']="You have won!";
+Texts['PvEWin']['de']="Du hast gewinnen!";
+Texts['PvELose']=new Array();
+Texts['PvELose']['cz']="Prohrál jste";
+Texts['PvELose']['sk']="Prohrál jste";
+Texts['PvELose']['en']="You have lost";
+Texts['PvELose']['de']="Du hast verlort";
+Texts['PvPlocal']=new Array(2);
+Texts['PvPlocal'][0]=new Array();
+Texts['PvPlocal'][1]=new Array();
+Texts['PvPlocal'][0]['cz']="Bílý výhrál!";
+Texts['PvPlocal'][0]['sk']="Bílý výhrál!";
+Texts['PvPlocal'][0]['en']="White won!";
+Texts['PvPlocal'][0]['de']="Weiß hat gewinnen!";
+Texts['PvPlocal'][1]['cz']="Černý výhrál!";
+Texts['PvPlocal'][1]['sk']="Černý výhrál!e";
+Texts['PvPlocal'][1]['en']="Black have won!";
+Texts['PvPlocal'][1]['de']="Schwarz hat gewinnen!";
+Texts['CCTODO']=new Array();
+Texts['CCTODO']['cz']="V horní řadě jsou volné figury pro černého hráče, v dolní pro bílého. Klikem na figuru změníte právě vybraného pěšce a tím odehrajete tah. Klikem na figuru kterou nemáte nebo kamkoli jinam zavřete toto okno.";
+Texts['CCTODO']['sk']="V horní řadě jsou volné figury pro černého hráče, v dolní pro bílého. Klikem na figuru změníte právě vybraného pěšce a tím odehrajete tah. Klikem na figuru kterou nemáte nebo kamkoli jinam zavřete toto okno.";
+Texts['CCTODO']['en']="Availible pieces for the black player are in the upper row, for white player in the bottom row. Play your turn by clicking the piece you want the selected pawn to change to. Clicking on not availible piece or anywhere else will close this window.";
+Texts['CCTODO']['de']="Stücke für die schwarzen Spieler sind in der oberen Reihe, für weiße Spieler in der unteren Reihe. Spielen Sie an der Reihe, indem Sie auf das Stück Sie das ausgewählte Spielfigur zu ändern. Mit einem Klick auf nicht availible Stück oder anderswo wird dieses Fenster schließen.";
+Texts['BackLabel']=new Array();
+Texts['BackLabel']['cz']="Zpět";
+Texts['BackLabel']['sk']="Zpět";
+Texts['BackLabel']['en']="Back";
+Texts['BackLabel']['de']="Zurück";
+Texts['UIIntLabel']=new Array();
+Texts['UIIntLabel']['cz']="<!--Počítač promýšlí půltahů:-->Obtížnost (easy,medium,hard)";
+Texts['UIIntLabel']['sk']="<!--Počítač promýšlí půltahů:-->Obtížnost (easy,medium,hard)";
+Texts['UIIntLabel']['en']="<!--Number of halfturns computer thinks-->Difficulty (easy,medium,hard)";
+Texts['UIIntLabel']['de']="<!--Die Zerrunge der Computer denkt vor-->Difficulty (easy,medium,hard)";
+Texts['UITimeLabel']=new Array();
+Texts['UITimeLabel']['cz']="Počítač přemýšlí sekund:";
+Texts['UITimeLabel']['sk']="Počítač přemýšlí sekund:";
+Texts['UITimeLabel']['en']="Time computer has for thinking";
+Texts['UITimeLabel']['de']="Time der Computer hat für denken";
+Texts['Author']=new Array();
+Texts['Author']['cz']="Autor";
+Texts['Author']['sk']="Autor";
+Texts['Author']['en']="Author";
+Texts['Author']['de']="Author";
+Texts['Programmer']=new Array();
+Texts['Programmer']['cz']="Naprogramoval";
+Texts['Programmer']['sk']="Naprogramoval";
+Texts['Programmer']['en']="Programmer";
+Texts['Programmer']['de']="Programmer";
+//---------------------------------------------------------------------------
+Texts['TFM']=new Array();
+Texts['TFM']['cz']="       \
+Ovlávání a používání programu.<BR>      \
+V hlavním menu lze vybrat pomocí tlačítek (odshora:) hra dvou hráčů,  \
+ hra za bílé proti počítači, hra za černé proti počítači.     \
+Tah ve hře se provádí myší: výběrem figury a klikem na cílového pole, anebo na figuru v zásobníku vybranou na záměnu figur (pro KŠ a HC).    \
+Vrácení tahu lze provést klikem na ikonku šipky vpravo dole.    \
+Exit vpravo nahoře vzdá hru a vrátí zpět do menu.";
+Texts['TFM']['sk']="   \
+Ovládanie a používanie programu.<BR>    \
+V hlavnom menu je možné vybrať pomocou tlačítok (odhora) hra dvoch hráčov, hra \
+za bieleho proti počítaču, hra za čierneho proti počítaču. Ťah v hre se prevádza \
+myšou: výberom  figúry a klikom na cieľového pole anebo na figúru v zásobníku \
+určenú na zámenu figúr (pre KŠ a HC). Vrátenie ťahu je možné previesť klikom na ikonku šípky \
+vpravo dole. Exit vpravo hore vzdá hru a vráti späť do menu.";
+Texts['TFM']['en']="        \
+How to use the program.<BR> \
+In the main menu, you can start the game (2 players, white vs PC and black vs PC, \
+in this order from top to bottom) by clicking on the buttons.     \
+In the game, you can order a piece to move by clicking on it and then \
+ on its destination.                            \
+Small arrow in the right bottom corner will take back your turns. \
+Exit in the top right corner will take you back to the menu.";
+Texts['TFM']['de']="                \
+Wie man das Programm verwendet.<BR>  \
+Im Hauptmenü Sie kann das Spiel (2 Spieler, weiß gegen den Computer und  \
+ Schwarzes gegen den Computer, in diesem Auftrag von oben bis unten) indem Sie auf \
+ den Knöpfen beginnen klicken. Im Spiel können Sie ein Stück bestellen, um \
+ sich zu bewegen, indem Sie auf ihm und dann auf seinem Bestimmungsort \
+ klicken. Kleiner Pfeil in der rechten unteren Ecke nimmt Ihre Umdrehungen \
+ zurück. Ausgang in der Rechteecke endet das Spiel und nimmt Sie zurück zu \
+ dem Menü.";
+//---------------------------------------------------------------------------
+Texts['TFM'][0]=new Array();//CC
+//---------------------------------------------------------------------------
+Texts['TFM'][0]['cz']="<h1>Pravidla kostkových šachů</h1> <dl> <dt>Autor:</dt> <dd>Vladimír Pribylinec</dd> </dl>Místo klasických figur jsou použity kostky, které mají na každé straně samostatně symbol krále, dámy,věže, střelce, jezdce a pěšce. Aktuální hodnotu kostky určuje symbol na její vrchní ploše. Základní pravidla jsou stejná jako v klasických šachách. Zrušena je proměna pěšce, který dosáhl poslední řady šachovnice a braní mimochodem (e.Kostky odstraněné ze šachovnice (kromě pěšců) se bez otáčení odkládají do zásobníku vedle šachovnice. Hráč, který je na tahu, může buď táhnout kostkou podle symbolu na její vrchní ploše nebo otočením kostky změnit libovolného pěšce za jinou figuru tak, aby se shodovala s figurou opačné barvy v zásobníku. Tato kostka se okamžitě ze zásobníku odstraní.\
+V programu se po dvojkliku na pěšce otevře menu kde je vidět počet figur v zásobníku a klikem na figuru lze pěšce proměnit.\
+<hr />\
+<p>Pravidla hry byla publikována v článku <i>Cubic Developments..., in Variant Chess 48, May 2005, the British Chess Variants Society, page 59</i> </p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][0]['sk']="<h1>Pravidlá kockového šachu</h1> <dl> <dt>Autor:</dt>\
+<dd>Vladimír Pribylinec</dd> </dl>\
+<p>\
+Namiesto klasických figúr sú použité kocky, ktoré majú na každej strane samostatne symbol\
+kráža, dámy, veže, strelca, jazdca a pešiaka.\
+Aktuálnu hodnotu kocky určuje symbol na jej vrchnej ploche.\
+Základné pravidlá sú rovnaké ako v klasickom šachu.\
+Zrušená je premena pešiaka, ktorý dosiahol posledný rad šachovnice a branie mimochodom (e.p.).\
+Kocky odstránené zo šachovnice (okrem pešiakov) sa bez otáčania odkladajú do zásobníka vedža šachovnice.\
+Hráč, ktorý je na ťahu, môže buď ťahať kockou podža symbolu na jej vrchnej ploche alebo otočením kocky zmeniť ľubovolného pešiaka za inú figúru tak, aby sa zhodovala s figúrou opačnej farby v zásobníku. Táto kocka sa okamžite zo zásobníka odstráni.\
+V programu se po dvojkliku na pěšce otevře menu kde je vidět počet figur v zásobníku a klikem na figuru lze pěšce proměnit.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][0]['en']="<h1>Cubic Chess Rules</h1> <dl> <dt>Author:</dt>\
+<dd>Vladimír Pribylinec</dd>\
+</dl>\
+<p>\
+The traditional men are substitued by the cubes, which have on each side displayed respectively a king, queen, pawn, bishop, knight and rook. The current value of the cube is determined by the symbol uppermost.\
+The basic rules are the same like in the orthochess.\
+Eliminated are the promotion of the pawn reaching the last rank and e.p. capture.\
+Captured men (not pawns) are put without rotation into a 'stock' next to the board.\
+A player on turn may either move a man (whose image is displayed uppermost) or may change any pawn on the board by rotating of the cube to show a man of the same kind as the contrary colored man in the stock. This cube is immediately removed from the stock.\
+Durch Doppelklick auf das Pfand ingame, können Sie öffnen Sie das Menü mit allen Stück auf Lager und ändern Sie den Bauern.\
+</p>\
+ <hr /> \
+<p><em>Rules of the game where published in\
+article Cubic Developments... in\
+Variant Chess 48, May 2005, the British Chess\
+Variants Society, page 59 </em></p><em>  </em>";
+//---------------------------------------------------------------------------
+Texts['TFM'][0]['de']="<h1>Regeln des Würfel Schach</h1> <dl> <dt>Autor:</dt>\
+<dd>Vladimír Pribylinec</dd> </dl>                                           \
+<p>\
+Die traditionellen Männer sind erstatten durch die Würfel, die auf der jeden Seite selbstständig den König, die Dame, den Bauer, den Läufer, den Springer und den Turm angezeigt werden. Die aktuell Qualität des Würfel bestimmt das Symbol auf der Oberfläche.\
+Die Grendregeln sind dieselben wie in dem Orthochess.\
+Eliminiert sind die Förderung des Bauer, der den letzten Rank erraicht und die Ethnahme nebenbei (e.p.).\
+Die gefangengenommenen Männer (nicht Bauern) werden in einen 'Stack' nahe bei dem Brett gesetzt.\
+Ein Spieler auf Umdrehung kann entweder mit einer Würfel (dessen Bild verschieben obenauf angezeigt wird) ziehen oder nach ihn Rotation den beliebigen Bauer auf dem Brett ändern auf eine übgrigen Figur mit gleichen Art als die konträre farbige Figur in dem Stack. Dieser Würfel wird sofort aus dem Stack entfernt.\
+</p>\
+<hr/>\
+<p> Die Regeln waren in dem Artikel <i>Cubic\
+Developments..., in der Zeitschrift\
+Variant Chess 48, Mai 2005, the British Chess\
+Variants Society, Siete 59</i> publiziert. </p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][1]=new Array();//EC
+//---------------------------------------------------------------------------
+Texts['TFM'][1]['cz']="<h1>ExcelChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>\
+<p>\
+Základní pravidla jsou stejná jako v klasických šachách.<br>\
+Zrušena je proměna pěšce, který dosáhl poslední řady šachovnice a braní mimochodem (e.p.).</p>\
+<p>Poslední dvě řady šachovnice (7. a 8. pro bílého, 1. a 2. pro černého) jsou zonou proměny.<br>\
+Po vstupu do této zony se všechny kameny mění  na dámu. Po opuštění zony proměny se hodnota figury nemění.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][1]['sk']="<h1>ExcelChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír\
+Pribylinec</dd> </dl>\
+<p>Základné pravidlá sú rovnaké ako v klasickom šachu.<br>\
+Zrušená je premena pešiaka, ktorý dosiahol posledný rad šachovnice a branie mimochodom (e. p.).</p>\
+<p>Posledné dva rady šachovnice (7. a 8. pre bieleho, 1. a 2. pre čierneho) sú zónou premeny.<br>\
+Po vstupu do tejto zóny sa všetky kamene menia na dámu. Po opustení zóny premeny sa\
+hodnota figúry nemení.</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][1]['en']="<h1>ExcelChess</h1> <dl> <dt>Author:</dt> <dd>Vladimir Pribylinec</dd> </dl>\
+<p>\
+The basic rules are the same like in the orthochess.<br>\
+Eliminated are the promotion of the pawn reaching the last rank and e.p. capture.\
+<BR>\
+The last rows of the board (7. and 8. for white, 1. and 2. for black) are 'the promotion zone'.<br>\
+All units entering to the zone change to a queen. After leaving of the promotion zone the value of the unit do not change.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][1]['de']="<h1>ExcelChess</h1> <dl> <dt>Author:</dt> <dd>Vladimir \
+Pribylinec</dd> </dl>                                                         \
+<p>\
+Die grundlegenden Regeln sind die selben wie in den orthochess. Beseitigt die Forderung des Bauers, der den letzten Rang und e.p.-Sicherung erreicht.\
+<BR>\
+Die letzten Reihen des Brettes (7. und 8. fur Weis, 1. und 2. fur Schwarzes) sind 'das Forderungzone'.\
+<BR>\
+Alle Maseinheiten, die zur Zone hereinkommen, andern zu einer Dame. Nachdem er der Forderungzone gegangen hat, andern der Wert der Maszeinheit nicht.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][2]=new Array();//PC
+//---------------------------------------------------------------------------
+Texts['TFM'][2]['cz']="<h1>PassionChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\
+Základní pravidla jsou stejná jako v klasických šachách.  Zrušeno je braní mimochodem (e.p.).\
+Pěšec se pohybuje jako v orthochess a má extenzi přeskoku sousedního pole  směrem napřed\
+z libovolného  pole šachovnice. Přeskočené pole může být volné anebo obsazeno\
+libovolným kamenem - kromě pěšce .Následujúcí pole musí být volné.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][2]['sk']="<h1>PassionChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>\
+<p>\
+Základné pravidlá sú rovnaké ako v klasickom šachu. Zrušené je branie mimochodom (e.p).\
+Pešiak sa pohybuje ako v orthochess a má extenziu prekoku susedného poľa smerom dopredu\
+z ľubovoľného poľa šachovnice. Preskočené pole môže byť voľné alebo obsadené\
+ľubovoľných kameňom - okrem pešiaka. Nasledujúce pole musí byť voľné. <br>\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][2]['en']="<h1>PassionChess</h1> <dl> <dt>Author:</dt> <dd>Vladimir Pribylinec</dd> </dl>\
+<p>\
+The basic rules are the same as in the orthochess. Eliminated is e.p.capture.\
+A pawn has movement as in orthochess and an extension by a jumping the adjacent\
+square straight forward from any square of the board..The jumped square\
+may be free or occupied by any man - except pawn.\
+Next square must be free.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][2]['de']="<h1>PassionChess</h1>  \
+<dl>\
+	<dt>Author:\
+	</dt>\
+	<dd>Vladimír Pribylinec\
+	</dd>\
+</dl>\
+<p>Die grundlegenden Regeln sind die selben wie in dem klasischen Schach. E.p.Sicherung ist erreicht.\
+Der Bauer geht genauso in dem Orthochess and er hat die Extension mit dem Übersprung des Nachbarfeld\
+nach vorn aus der liebligen Feld des Schachbrett. Das gesprungen Feld kann frei oder besetz mit dem\
+beliebigen Stein sein außer Baure.Das nächste Feld muss frei sein.<BR>\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][3]=new Array();//HC
+Texts['TFM'][3]['cz']="<h1>HoleChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\
+Místo klasických figur jsou použity kostky, které mají na každé straně samostatně symbol krále, dámy, věže, střelce, jezdce a pěšce. Aktuální hodnotu kostky určuje symbol na její vrchníploše. Základní pravidla jsou stejná jako v klasických šachách. Zrušena je proměna pěšce, který dosáhl poslední řady šachovnice a braní mimochodem (e.p.). Kostky odstraněné ze šachovnice  se bez otáčení odkládají do zásobníku vedle šachovnice. Hráč, který je na tahu, muže buď táhnout kostkou podle symbolu na její vrchní ploše aneboprovést výměnu libovolné své figury na šachovnici za libovolnou figuru opačné barvy v zásobníku. Zamezena je proměna ohrožené figury na pěšce. Tato virtuální záměna se uskuteční otočením obou kostek podle symboluna vrchní ploše, přičem obě zůstanou na původním místě.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][3]['sk']="<h1>HoleChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\
+Namiesto klasických figúr sú použité kocky, ktoré majú na každej strane samostatne symbol kráľa, dámy, veže, strelca, jazdca a pešiaka. Aktuálnu hodnotu kocky určuje symbol na jej vrchnej ploche. Základné pravidlá sú rovnaké ako v klasickom šachu. Zrušená je premena pešiaka, ktorý dosiahol posledný rad šachovnice a branie mimochodom (e.p.). Kocky odstránené zo šachovnice  sa bez otáčania odkladajú do zásobníka vedľa šachovnice. Hráč, ktorý je na ťahu, môže buď ťahať kockou podľa symbolu na jej vrchnej ploche alebo previesť výmenu ľubovoľnej svojej figúry na šachovnici za ľubovoľnú figúru opačnej farby v zásobníku. Zamedzená je premena ohrozenej figúry na pešiaka. Táto virtuálna zámena sa uskutoční otočením obidvoch kociek podľa symbola na vrchnej ploche.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][3]['en']="<h1>HoleChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\
+The traditional men are substitued by the cubes, \
+which have on each side displayed respectively a king, queen, pawn, bishop, \
+knight and rook. The current value of the cube is determined by the symbol \
+uppermost. The basic rules are the same like in the orthochess. \
+Eliminated are the promotion of the pawn reaching the last rank and e.p. capture. \
+Captured men  are put without rotation into a 'stock' next to the board. \
+A player on turn may either move a man (whose image is displayed uppermost) or \
+may change any man on the board to the unit with an opposite colour in the stock \
+, forbided is a change of the piece under attack to a pawn. \
+This virtual change is made by a rotation of both cubes dependently to a symbol on \
+the upper side. \
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][3]['de']="<h1>HoleChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\
+Die traditionellen Männer sind erstatten durch die Würfel, die auf der jeden Seite \
+ selbstständig den König, die     Dame, den Bauer, den Läufer, den Springer und den \
+ Turm angezeigt werden. Die aktuell Qualität   des Würfel bestimmt das Symbol auf \
+ der Oberfläche. Die Grendregeln sind dieselben wie in dem Orthochess. Eliminiert \
+ sind die Förderung des Bauer, der den letzten Rank erraicht und die Ethnahme \
+ nebenbei   (e.p.). Die gefangengenommenen Männer werden in einen 'Stack' nahe \
+ bei dem Brett gesetzt. Ein Spieler auf Umdrehung kann entweder mit einer Würfel \
+ (dessen Bild verschieben obenauf angezeigt wird) ziehen oder nach ihn Rotation den \
+ beliebigen Figure auf dem Brett und den beliebigen Figure mit die konträre farbige \
+ Figure in dem Stack nad die Symbole auf der obere Seite. Es ist verboten die bedroh \
+ ten Figure nach der Bauer wechseln. Dieser virtuell Wechsel realisiert sich nach \
+ die Rotation der beiden Würfeln vorbai des Symbol auf der Oberfläche und die \
+ Würfeln auf dem selba Feld bleiben. \
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][4]=new Array();//BC
+Texts['TFM'][4]['cz']="<h1>ButterflyChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\
+Základní pravidla jsou stejná jako v klasických šachách. Zrušeno je braní mimochodem (e.p.). Dáma, věž a strelec mají kromě své obvyklé pohyblivosti navíc extenzi ve formě přeskoku kamene libovolné barvy, který jim jako první bráni v pohybu ve zvoleném směru. Extenze umožňuje figuře postavit se na následující pole za přeskočeným kamenem - jestli je obsazeno soupeřícím kamenem, vyloučí se z hry. Přeskočený kámen zůstává ve hře. Kameny stojící na 2. a 7. řadě nelze překočit figurou s extenzí směrem vpřed.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][4]['sk']="<h1>ButterflyChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\Základné pravidlá sú rovnaké ako v klasickom šachu. Zrušené je branie mimochodom (e.p). Dáma, veža a strelec majú okrem svojej obvyklej pohyblivosti navyše extenziu vo forme preskoku kameňa ľubovoľnej farby, ktorý im ako prvý bráni v pohybe vo zvolenom smere. Extenzia umožňuje figúre postaviť sa na nasledujúce pole za preskočený kameň - ak je  obsadené súperiacim kameňom, tento sa vylúči z hry. Preskočený kameň zostáva v hre. Kamene stojace na 2. a 7. rade nemožno preskočiť figúrou s extenziou smerom dopredu.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][4]['de']="<h1>ButterflyChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\Die grundlegenden Regeln sind die selben wie in dem klasischen Schach. E.p.Sicherung ist erreicht. Queen, Turm und Läufer haben mit Ausnahme seiner Bewegung neben einer Erweiterung keine farbigen Menschen, die als erste die Blockade einer Bewegung in der gewählt wird springen Richtung. Die Erweiterung ermöglicht für Einheit auf den nächsten Platz hinter stehen ein Mann sprang - wenn sie von feindlichen Einheit besetzt ist, ist es von einem Spiel eliminiert. Die Männer, die auf 2. und 7. Reihen stehen, dürfen nicht nach vorn Richtung mit dem Extension gesprungen.\
+</p>";
+//---------------------------------------------------------------------------
+Texts['TFM'][4]['en']="<h1>ButterflyChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\The basic rules are the same as in the orthochess. Eliminated is e.p.capture. Queen, Rook and Bishop have except his movement in addition an extension to jump any colored man, that is as first blocking a movement in the selected direction. The extension enables for unit to stand on the next square behind a jumped man - if is occupied by enemy unit, that is eleminated from a game. The men, that are standing on 2. and 7. row must not be jumped by extended unit in direction forward.\
+</p>";
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+Texts['TFM'][7]=new Array();//CS
+Texts['TFM'][7]['cz']="<h1>CubicShogi</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>\<BR>Místo klasických figur jsou použity kostky, které mají na každé straně samostatně symbol krále, dámy, věže, střelce, jezdce a pěšce. Aktuální hodnotu kostky určuje symbol na její vrchní ploše. Hraje se na desce s 8x8 polemi. Poslední dvě řady (pro bíleho 7.a 8.,pro černého 1. a 2.) představují zónu povýšení. <BR>\
+<BR>\
+Základní postavení: <BR>\
+Bílý Kd1 Gc1 Ge1 Vg2 Sb2 Sf1 Jb1 Jg1, pěšci na celé 3. řadě <BR>\
+Eerný: Ke8 Gd8 Gf8 Vb7 Sc8 Sg7 Jb8 Jg8, pišci na celé 6. řadě <BR>\
+<BR>\
+Pohyblivost figur: <BR>\
+<ul>\
+<li>Král       >  o jedno pole každým směrem,</li>\
+<li>Generál  >  jako král kromě pohybu šikmo dozadu.</li>\
+<li>Věž       >  po sloupcích a řadách,</li>\
+<li>Střelec  >  po diagonálach,</li>\
+<li>Jezdec   >  dopředu o dva pole na sousedící sloupec - může přeskočit i jiné figury, navíc se pohybuje horizontálně o jedno pole,</li>\
+<li>Pěšec     >  o jedno pole přímo dopředu a stejně i bere.</li>\
+</ul><BR>\
+Vyloučené kameny se ukládají do zásobníku, ve kterém jsou na začátku hry dva bílí a dva černí pěšci. Pěšec a jezdec se po vstupu do zóny povýšení okamžitě mění na generále otočením kostky, střelec se změní na věž. Figury doložené ze zásobníku do zóny povýšení jsou povýšené stejným způsobem, ale ne okamžitě. Všechny (kromě věže) jsou povýšené po provedení standardního pohybu v zóně. Věž má extenzi pohybu okamžitě, bez ohledu na způsob, jak se v zóně ocitla. Po tahu ven ze zóny povýšení si střelec ponecháva pohyblivost nezměněnou, věž ztrácí extenzi pohybu o jedno pole diagonálně, a pohybuje se jako věž na začátku hry. Figura odebrána ze šachovnice si před uložením do zásobníku vymění symbol na horní ploše kostky s pěšcem opačné barvy v zásobníku. Když se v zásobníku pěšec pro záměnu nenachází, figura je vyloučena z hry.  U pěšců opačné barvy nemůže dojít k záměne symbolu, proto pěšec odobraný ze šachovnice je vyloučený z hry - stejně jako figura, když se v zásobníku pěšec pro záměnu nenachází. Hráč, který je na tahu, může buď táhnout figurou na desce nebo libovolnou figuru své barvy ze zásobníku doložit na libovolné volné pole na desce, ale pěšec nesmí být doložen:<BR>\
+# na sloupec, na kterém se již nachází pěšec stejné barvy,<BR>\
+# na některé pole za soupeřovým pěšcem.<BR>\
+Pro šach, mat a remízu platí stejné podmínky jako v klasických šachách. Vyhrává hráč, který dá mat soupeři. <BR>\
+<BR>\
+</P>";
+//---------------------------------------------------------------------------
+Texts['TFM'][7]['sk']="<h1>CubicShogi</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \Namiesto klasických figúr sú použité kocky, ktoré majú na každej strane samostatne symbol kráľa, dámy, věže, střelca, jazdca a pešiaka. Aktuálnu hodnotu kocky určuje symbol na jej vrchnej ploche. Hrá sa na doske s 8x8 poľami. Posledné dva rady (pre bieleho 7.a 8.,pre čierneho 1. a 2.) predstavujú zónu povýšenia. <BR>\
+<BR>\
+Základné postavenie: <BR>\
+Bílý       Kd1 Gc1 Ge1 Vg2 Sb2 Sf1 Jb1 Jg1, pešiaci na celom 3. rade <BR>\
+Čierny:  Ke8 Gd8 Gf8 Vb7 Sc8 Sg7 Jb8 Jg8, pešiaci na celom 6. rade <BR>\
+<BR>\
+Pohyblivost figur: <BR>\
+<ul>\
+<li>Kráľ       >  o jedno pole každým smerom,</li>\
+<li>Generál  >  ako kráľ, okrom pohybu šikmo dozadu.</li>\
+<li>Věž       >  po slĺpcoch a radoch,</li>\
+<li>Stoelec  >  po diagonálach,</li>\
+<li>Jazdec   >  dopredu o dva polia na susediaci stĺpec - môže preskočiť aj iné figúry, naviac sa pohybuje horizontálne o jedno pole,</li>\
+<li>Pešiak    >  o jedno pole priamo dopredu a rovnako aj berie.</li>\
+</ul><BR>\
+Vylúčené kamene se ukladajú do zásobníka, v ktorom sú na začiatku hry dvaja biely a dvajačierni pešiaci. Pešiak a jazdec sa po vstupu do zóny povýšenia okamžite menia na generála otočením kocky, strelec sa zmení na vežu. Figury doložené zo zásobníka do zóny povýšenia sú povýšené rovnakým spôsobom, ale nie okamžite. Všetky (okrem věže) sú povýšené po prevedení štandardného pohybu v zóne. Veža má extenziu pohybu okamžite, bez ohľadu na spôsob, ako sa v zóne ocitla. Po ťahu von zo zóny povýšenia si strelec ponecháva pohyblivost nezmenenú, veža stráca extenziu pohybu o jedno pole diagonálne, a pohybuje se ako veža na začiattku hry. Figúra odobraná zo šachovnice si před uložením do zásobníka vymení symbol na hornej ploche kocky s pešiakom opačnej farby v zásobníku. U pešiakov opačnej farby nemôže dôjsť k zámene symbolu, preto pešiak odobraný zo šachovnice je vylúčený z hry - rovnako ako figúra, keď sa v zásobníku pešiak pre zámenu nenachádza. Hráč, ktorý je na ťahu, môže buď ťáhať figúrou na doske alebo ľubovoľnú figúru svojej farby zo zásobníka doložiť na ľubovoľné voľné pole na doske, ale pešiak nesmie byť doložený:<BR>\
+# na stĺpec, na ktorom sa už nachádza pešiak rovnakej farby,<BR>\
+# na niektoré pole za súperovým pešiakom.<BR>\
+Pre šach, mat a remízu platia rovnaké podmienky ako v klasickom šachu. Vyhrává hráč, ktorý dá mat súperovi. <BR>\
+</P>";
+//---------------------------------------------------------------------------
+Texts['TFM'][7]['de']="<h1>CubicShogi</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Pribylinec</dd> </dl>                                                           \
+<p>Anstelle der klassischen Würfel Zahlen sind auf jeder Seite einzeln Symbol König, Dame, Turm, Läufer, Springer und Bauern verwendet. Der aktuelle Wert der Würfel bestimmt das Symbol auf seiner Oberseite. Es wird auf einem Brett von 8x8 Feldern gespielt. Die letzten zwei Reihen (8 für weißes 7.a, die schwarze 1 und 2) sind die Förderung Zone.<BR>\
+<BR>\
+Ausgangsposition:<BR>\
+Weiß Kd1 GC1 GE1 VG2 Sb2 SF1 JB1 JG1, Bauern um die dritte Trihe<BR>\
+Schwarz: Ke8 GD8 GF8 Vb7 Lc8 Lg7 Sb8 Jg8, Bauern rund um den 6. Reihe<BR>\
+<BR>\
+Mobility Zahlen:<BR>\
+<ul>\
+<li>King      > ein Platz in jede Richtung,</li>\
+<li>General > wie ein König, legte ocker Bewegung zurück.</li>\
+<li>Turm    > nach Spalten und nach Reilen</li>\
+<li>Läufer   > entlang Diagonalen,</li>\
+<li>Springer> zwei Felder vor angrenzend an die Spalte - können über andere Zahlen springen, zusätzlich zu bewegenden einen quadratischen horizontal,</li>\
+<li>Pawn    > ein Platz direkt vorne sowie zu nehmen.</li>\
+</ul>\
+<BR>\
+Ausgeschlossen Stein wird in den Behälter, in dem sie zu Beginn des Spiels einer weißen und einer schwarzen Bauer platziert. Bauer und Springer nach der Eingabe die Förderung Zone sofort ändern die allgemeine rotierenden Würfel Shooter verwandelt Turm. Unterstützt durch Zahlen aus dem Behälter in den Zonen-Aktionen werden in der gleichen Art und Weise befördert, aber nicht sofort. Alle (außer dem Turm) durch die Standard-Design-Bewegung in der Zone gefördert. Turm hat Ausfahrbewegung sofort, unabhöngig von der Art, wie sie in der Zone war. Nach dem Umzug aus der Förderung Zone Läufer unveröndert Mobilität verliert, Ausfahrbewegung ein Feld diagonal und bewegt sich auf den Turm wie auf dem Spiele. Abbildung von der Platine zurückgezogen, bevor Sie in dem Behälter ersetzen Symbol auf der oberen Oberfläche des Würfels gegenüber liegenden Bauer Farbe im Behälter. Die Bauern entgegengesetzte Farben bis cann nicht werden Symbol gemischt, so Bauer vom Schachbrett aus dem Spiel entfernt wird eliminiert - ebenso wie Einheit, wenn der Stapel ist kein Ersatz für den Bauern. Der Spieler, der am Zug kann entweder gezogene Figur auf dem Brett oder einer ihrer Farbe Figuren aus dem Fach zu einem leeren Platz auf der Platine zu beweisen sein, sondern muss von einem Bauern beizufügen:<BR>\
+# Die Spalte, die bereits ein Bauer der gleichen Farbe<BR>\
+# Einige Felder hinter gegnerischen Bauern.<BR>\
+Für Schach, ziehen schachmatt und die gleichen Bedingungen wie im klassischen Schach. Der Spieler, der Gegner schachmatt. <BR>\
+</P>";
+//---------------------------------------------------------------------------
+Texts['TFM'][7]['en']="<h1>CubicShogi</h1> <dl> <dt>Author:</dt> <dd>Vladimír Pribylinec</dd> </dl> <p>Instead of classical figures are used cubes to each side separately symbol of the king, rook, bishop, knight and pawn. Current value of dice determines the symbol on its upper side. The game is played on the board with a 8x8 array. The last two rows ( 7th and 8th for a white,  1th and 2th for a black ) represent the promotion zone.<BR><BR> Basic position:<BR> White Kd1 Gc1 Ge1 Rg2 Bb2 Bf1 Nb1 Ng1, pawns on the whole 3th row<BR> Black: Ke8 Gd8 Gf8 Rb7 Bc8 BG7 Nb8 Ng8, pawns on the whole 6th row<BR> <BR>Mobility figures:<BR><ul><li>King       >   one square in any direction. </li> <li>General  >   one square in any direction except diagonally backwards.     </li><li>Rook     >   any squares of the columns and rows.</li><li>Bishop   >   any squares of the diagonals.</li><li>Knight   >   forward two squares to the adjacent column and it has an extension                  to move horizontal for a one square. It ca jump other men. </li><li>Pawn    >   one square forward, it captures the same way it moves.</li></ul><BR>Captured units are stored in the stack, in which to start the game two white and two black pawns. A pawn and the knight, after entering into the promotion zone immediately turns into a general by rotating cube, the bishop turns into a rook. The drop of the units from the stack into a zone with no no promotion for their move. All ( except rook) are promoted after standard motion zone. A rook has in the promotion zone always extension move one square in the diagonal. After the extension out of the promotion zone the bishop leaves the mobility unchanged rook extension movement loses one space diagonally , and moves like a tower at the beginning of the game. The unit removed from the board before placing in the stack to replace the symbol of the upper surface of the cube with opposite colors pawn in the stack. The pawns opposite colors canot be mixed up symbol, so pawn removed from the chessboard is eliminated from the game - as well as unit, when the stack is not a substitution for the pawn.A player whose turn it is to move may either move a man on the chessboard, or drop any man from his stack on any vacant square, but a pawn may not be dropped:<BR># on a file already containing a pawn of the same color,<BR># on the squares behind an opponent's pawn.<BR>For chess, checkmate and draw the same conditions as in classical chess. The player who checkmates the opponent, wins.<BR></P>";
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+
+
+
+function Unselect()
+{
+	SelectionX=-1;
+	SelectionY=-1;
+  document.getElementById("Select").style.visibility="hidden";
+}
+function Select(X,Y,S)
+{
+  SelectionX=X;
+  SelectionY=Y;
+	var seli=document.getElementById("Select");
+  seli.style.left=X*100.0/8.0+"%";
+  seli.style.top=Y*100.0/8.0+"%";
+  seli.style.visibility="visible";
+}
+
+function BoardClick(X,Y)
+{
+  if (Waiting || Moving) return;
+  var S=Board.Color[X+8*Y];
+	if (S==Board.Side)
+	{
+		if (SelectionX==X && SelectionY==Y)
+		{
+			if ((Board.ChessVari==0 && Board.Unit[X+8*Y]==Board.PAWN) || (Board.ChessVari==3 && Board.Unit[X+8*Y]!=Board.KING))
+			{
+				if (Board.ChessVari==3)
+				{
+					document.getElementById("0ifo").innerHTML=Board.Grave[0][0];
+					document.getElementById("0ifo").style.visibility="visible";
+					document.getElementById("6ifo").innerHTML=Board.Grave[1][0];
+					document.getElementById("6ifo").style.visibility="visible";
+					document.getElementById("6ifopic").style.visibility="visible";
+					document.getElementById("0ifopic").style.visibility="visible";
+				}
+				else
+				{
+					document.getElementById("0ifo").style.visibility="hidden";
+					document.getElementById("6ifo").style.visibility="hidden";
+					document.getElementById("6ifopic").style.visibility="hidden";
+					document.getElementById("0ifopic").style.visibility="hidden";
+				}
+				document.getElementById("1ifo").innerHTML=Board.Grave[0][1];
+				document.getElementById("2ifo").innerHTML=Board.Grave[0][2];
+				document.getElementById("3ifo").innerHTML=Board.Grave[0][3];
+				document.getElementById("4ifo").innerHTML=Board.Grave[0][4];
+
+				document.getElementById("7ifo").innerHTML=Board.Grave[1][1];
+				document.getElementById("8ifo").innerHTML=Board.Grave[1][2];
+				document.getElementById("9ifo").innerHTML=Board.Grave[1][3];
+				document.getElementById("10ifo").innerHTML=Board.Grave[1][4];
+
+				document.getElementById("CCTODO").innerHTML=Texts['CCTODO'][lang];
+
+				document.getElementById("CC").style.visibility="visible";
+			}
+		}
+		else
+			Select(X,Y,S);
+	}
+  else
+  {
+	if (SelectionX!=-1)
+	{
+			var doit=Board.MoveParam(SelectionX+8*SelectionY,X+8*Y,0);
+	  //Updateframe.location.href="update.php?F="+SelectionX+8*SelectionY+"&T="+X+8*Y;
+	  if (doit)
+		MoveUnit(SelectionX,SelectionY,X,Y,0);
+	  //debug
+	  //else
+	  //    alert("Nejde tahnout");
+	  //Waiting=true;
+          Unselect();
+	}
+        else
+        {
+          if (Board.ChessVari==7 && S==Board.EMPTY)
+          {
+					document.getElementById("0ifo").innerHTML=Board.Grave[0][0];
+					document.getElementById("0ifo").style.visibility="visible";
+					document.getElementById("6ifo").innerHTML=Board.Grave[1][0];
+					document.getElementById("6ifo").style.visibility="visible";
+					document.getElementById("6ifopic").style.visibility="visible";
+					document.getElementById("0ifopic").style.visibility="visible";
+				document.getElementById("1ifo").innerHTML=Board.Grave[0][1];
+				document.getElementById("2ifo").innerHTML=Board.Grave[0][2];
+				document.getElementById("3ifo").innerHTML=Board.Grave[0][3];
+				document.getElementById("4ifo").innerHTML=Board.Grave[0][4];
+
+				document.getElementById("7ifo").innerHTML=Board.Grave[1][1];
+				document.getElementById("8ifo").innerHTML=Board.Grave[1][2];
+				document.getElementById("9ifo").innerHTML=Board.Grave[1][3];
+				document.getElementById("10ifo").innerHTML=Board.Grave[1][4];
+
+				document.getElementById("CCTODO").innerHTML=Texts['CCTODO'][lang];
+
+				document.getElementById("CC").style.visibility="visible";
+                                SelectionX=X;
+                                SelectionY=Y;
+          } 
+        }
+		
+  }
+}
+function CCChangeClick()
+{
+document.getElementById('CC').style.visibility='hidden';
+document.getElementById('0ifo').style.visibility='hidden';
+document.getElementById('6ifo').style.visibility='hidden';
+document.getElementById('0ifopic').style.visibility='hidden';
+document.getElementById('6ifopic').style.visibility='hidden';
+}
+function MorphClick(idu)
+{
+  
+	document.getElementById("CC").style.visibility="hidden";
+        document.getElementById("0ifo").style.visibility="hidden";
+	document.getElementById("6ifo").style.visibility="hidden";
+	document.getElementById("0ifopic").style.visibility="hidden";
+	document.getElementById("6ifopic").style.visibility="hidden";
+	if (Board.MoveParam(SelectionX+8*SelectionY,SelectionX+8*SelectionY,idu))
+	{
+		MorphedUnit(SelectionX,SelectionY);
+	}
+        Unselect();
+}
+function MorphedUnit(fromX,fromY)//musi se volat potom co se zavola funkce board
+{
+	var u=document.getElementById(fromX+""+fromY);
+if (!u)
+{
+  u=new Image();
+  u.className="Kostka";
+  u.onclick=new Function("BoardClick("+fromX+","+fromY+");");
+	u.id=""+fromX+""+fromY+"";
+	u.style.zIndex=2;
+	u.style.left=fromX*100.0/8.0+"%";
+	u.style.top=fromY*100.0/8.0+"%";
+document.getElementById("SpanBoard").appendChild(u);
+}
+
+	u.src=Face(fromX+8*fromY);
+	EndTurn();
+}
+
+function MoveUnit(fromX,fromY,ToX,ToY,t)//musi se volat potom co se zavola funkce board
+{
+	var u=document.getElementById(fromX+""+fromY);
+	if (u==undefined) alert("undefined"+fromX+""+fromY);
+  if (t==0)
+  {
+	u.onclick=new Function("BoardClick("+ToX+","+ToY+");");
+		u.src=Face(ToX+8*ToY);
+	u.style.zIndex=4;
+	Moving=true;
+  }
+  var end=false;
+  if (t>1)
+  {
+	t=1;
+	end=true;
+  }
+  var X=(ToX-fromX)*t+fromX;
+  var Y=(ToY-fromY)*t+fromY;
+
+	u.style.left=X*100.0/8.0+"%";
+	u.style.top=Y*100.0/8.0+"%";
+
+	if (Board.RochMove)//rosada musi pohnout i s vezi
+	{
+	Board.RochMove=false;
+	var fx=Board.RFR%8;
+	var fy=Math.floor(Board.RFR/8);
+	var tx=Board.RTO%8;
+	var ty=Math.floor(Board.RTO/8);
+	var v=document.getElementById(fx+""+fy);
+	v.onclick=new Function("BoardClick("+tx+","+ty+");");
+	v.id=""+tx+""+ty+"";
+	v.style.zIndex=2;
+	v.style.left=tx*100.0/8.0+"%";
+	v.style.top=ty*100.0/8.0+"%";
+	}
+
+	if (!end)
+	{
+		t+=AnimDelay/Animtime;
+		var st=setTimeout("MoveUnit("+fromX+","+fromY+","+ToX+","+ToY+","+t+");",AnimDelay);
+	}
+	else
+	{
+		var trgt=document.getElementById(ToX+""+ToY);
+		if (trgt) //mrtva figurka
+		{
+			var BoardStr=Board.HPly-1;
+			trgt.style.visibility="hidden";
+			trgt.id=trgt.id+"d"+BoardStr;
+			trgt.style.zIndex=1;
+		}
+		u.id=""+ToX+""+ToY+"";
+		u.style.zIndex=2;
+		Moving=false;
+		EndTurn();
+	}
+}
+function MoveBack(Bt)
+{
+	var BFromX=Bt.From%8;
+	var BFromY=(Math.floor(Bt.From/8));
+	var BToX=Bt.To%8;
+	var BToY=(Math.floor(Bt.To/8));
+	var defunit;
+	if (Bt.From!=Bt.To)   //KSmorfovani
+	{
+		defunit=document.getElementById(BToX+""+BToY+"d"+Board.HPly);
+	}
+	var movedunit=document.getElementById(BToX+""+BToY);
+	movedunit.style.left=BFromX*100.0/8.0+"%";
+	movedunit.style.top=BFromY*100.0/8.0+"%";
+	movedunit.id=BFromX+""+BFromY;
+	movedunit.src=Face(Bt.From);
+	movedunit.onclick=new Function("BoardClick("+BFromX+","+BFromY+");");
+	if (defunit)
+	{
+		defunit.id=BToX+""+BToY;
+		defunit.style.visibility="visible";
+		defunit.src=Face(Bt.To);
+	}
+        else
+        {
+	  if (Board.ChessVari==7 && Bt.From==Bt.To)
+          {
+            var d = document.getElementById('SpanBoard');
+            //var olddiv = document.getElementById(divNum);
+            d.removeChild(movedunit);
+          }
+        }
+	if (Board.RochMove)//rosada musi pohnout i s vezi
+  {
+	Board.RochMove=false;
+	var fx=Board.RFR%8;
+	var fy=Math.floor(Board.RFR/8);
+	var tx=Board.RTO%8;
+	var ty=Math.floor(Board.RTO/8);
+	var v=document.getElementById(fx+""+fy);
+	v.onclick=new Function("BoardClick("+tx+","+ty+");");
+	v.id=""+tx+""+ty+"";
+	v.style.zIndex=2;
+	v.style.left=tx*100.0/8.0+"%";
+	v.style.top=ty*100.0/8.0+"%";
+	}
+}
+
+function Back()
+{
+	if (Moving || Waiting) return;
+	if (Board.HPly<=1) return;
+	for (var t=0;t<2;t++)
+	{
+		if (Board.HPly>=1)
+		{
+			Board.Undo();
+			var Bt=Board.History[Board.HPly];
+			MoveBack(Bt);
+		}
+	}
+}
+
+function EndTurn()
+{
+	for (var i = 0; i < Board.FMoveI[1]; ++i)
+	if (Board.Move(Board.Moves[i]))
+	{
+		Board.Back();
+		break;
+	}
+  if (i == Board.FMoveI[1])
+  {
+		EndGame();
+		return;
+	}
+
+	//UI
+	Waiting=false;
+	Moving=false;
+	if (Board.Side==Comp)
+	{
+			Waiting=true;
+			Board.TaskThink("Board");
+			CheckEndFunc=setInterval("TaskCheckEnd()",100);
+
+			//vizualizace
+			document.getElementById("Progbar").style.visibility="visible";
+			document.getElementById("Progress").style.left="-100%";
+	}
+}
+
+function TaskCheckEnd()
+{
+  //debug
+	/*parent.document.getElementById('InfoMsg').innerHTML="Přemýšlím "+Board.Index+". tah dopředu. (prohledáno "+Board.Nodes+" pozic)"+
+	" pozice v zasobniku: "+Board.StackPos+";;;"+Board.DebugInfo+" |; ";
+	for (var j = 0; j < Board.PVLen[0]; ++j)
+	{
+	  parent.document.getElementById('dbt').innerHTML+=" "+Board.move_str(Board.PriVari[0][j]);
+		}  */  
+	//parent.document.getElementById('dbt').innerHTML=Board.DEBUGrecurtext;//DebugInfo;
+	//
+	//document.getElementById("InfoMsg").style.visibility="visible";     //debug
+
+	var foo=new Date();
+	var prcnt=-100+100*(foo.getTime()-Board.StartTime)/Board.MaxTime;
+
+	document.getElementById("Progress").style.left=prcnt+"%";
+	//document.getElementById("progmsg").innerHTML=Board.Index;debug
+
+	if (!Board.SearchStop) return; //porad se hleda
+	document.getElementById("Progress").style.left="0%";
+
+  clearInterval(CheckEndFunc);
+
+  if (Board.PriVari[0][0].From>=64)
+  {
+		alert("Pocitac se vzdal. The computer has resigned.");
+		EndGame();
+	return;
+  }
+
+  xfr=Board.PriVari[0][0].From%8;
+  yfr=Math.floor(Board.PriVari[0][0].From/8);
+  xto=Board.PriVari[0][0].To%8;
+  yto=Math.floor(Board.PriVari[0][0].To/8);
+  //alert("pocitac tahne "+xfr+";"+yfr+" na "+xto+";"+yto+""); debug
+
+  Board.Move(Board.PriVari[0][0]);
+  Board.SPly = 0;
+  Board.GenMov();
+
+  SelectionX=xto;
+	SelectionY=yto;
+	if (xfr==xto && yfr==yto)
+		MorphedUnit(xto,yto);
+	else
+		MoveUnit(xfr,yfr,xto,yto,0);
+  Waiting=false;
+}
+
+function Face(sq)
+{
+  fx=Board.Unit[sq];
+  if (Board.Color[sq]==Board.DARK)
+	fx+=6;
+  //alert("returning face "+fx+" of unit "+Board.Unit[sq]+" color "+Board.Color[sq]+" square "+sq);debuf
+  return ""+fx+".png";
+}
+
+function EndGame()
+{
+	var Msg="";
+	if (Board.InCheck(Board.Side))//vyhra
+	{
+	if (Comp<=1)  //hra s kompem
+		{
+			if (Board.Side==Comp)
+				Msg=Texts['PvEWin'][lang];
+			else
+				Msg=Texts['PvELose'][lang];
+		}
+		else
+		{
+			Msg=Texts['PvPlocal'][Board.Side^1][lang];
+		}
+	}
+	else//remiza
+		Msg=Texts['Remis'][lang];
+
+	document.getElementById("BoxMessage").innerHTML=Msg;
+	document.getElementById("BoxMessage").style.visibility="visible";
+	document.getElementById("BoxButton").style.visibility="visible";
+
+	document.getElementById("Box").style.visibility="visible";
+}
+function GoDifficulty(Param)
+{
+if (Param==0)//easy
+{
+document.getElementById("UITime").value=3;
+document.getElementById("UIInt").value=3;
+document.getElementById("EasyPicGlow").style.visibility="visible";
+document.getElementById("MediPicGlow").style.visibility="hidden";
+document.getElementById("HardPicGlow").style.visibility="hidden";
+document.getElementById("EasyPic").style.visibility="hidden";
+document.getElementById("MediPic").style.visibility="visible";
+document.getElementById("HardPic").style.visibility="visible";
+}
+if (Param==1)//medium
+{
+document.getElementById("UITime").value=10;
+document.getElementById("UIInt").value=6;
+document.getElementById("EasyPicGlow").style.visibility="hidden";
+document.getElementById("MediPicGlow").style.visibility="visible";
+document.getElementById("HardPicGlow").style.visibility="hidden";
+document.getElementById("EasyPic").style.visibility="visible";
+document.getElementById("MediPic").style.visibility="hidden";
+document.getElementById("HardPic").style.visibility="visible";
+}
+if (Param==2)//hard
+{
+document.getElementById("UITime").value=20;
+document.getElementById("UIInt").value=15;
+document.getElementById("EasyPicGlow").style.visibility="hidden";
+document.getElementById("MediPicGlow").style.visibility="hidden";
+document.getElementById("HardPicGlow").style.visibility="visible";
+document.getElementById("EasyPic").style.visibility="visible";
+document.getElementById("MediPic").style.visibility="visible";
+document.getElementById("HardPic").style.visibility="hidden";
+}
+}
+function MenuButton(Param)
+{
+	document.getElementById("Main").style.visibility="hidden";
+	document.getElementById("lcz").style.visibility="hidden";
+	document.getElementById("lsk").style.visibility="hidden";
+	document.getElementById("len").style.visibility="hidden";
+	document.getElementById("lde").style.visibility="hidden";
+	document.getElementById("CV0").style.visibility="hidden";
+	document.getElementById("CV1").style.visibility="hidden";
+	document.getElementById("CV2").style.visibility="hidden";
+	document.getElementById("CV3").style.visibility="hidden";
+	document.getElementById("CV4").style.visibility="hidden";
+	document.getElementById("CV7").style.visibility="hidden";
+	document.getElementById("chcb").style.visibility="hidden";
+	document.getElementById("chcb0").style.visibility="hidden";
+	document.getElementById("chcb1").style.visibility="hidden";
+	document.getElementById("chcb2").style.visibility="hidden";
+	document.getElementById("chcb3").style.visibility="hidden";
+	document.getElementById("chcb4").style.visibility="hidden";
+        document.getElementById("chcb7").style.visibility="hidden";
+	document.getElementById("UIIntLabel").style.visibility="hidden";
+	document.getElementById("EasyPic").style.visibility="hidden";
+	document.getElementById("MediPic").style.visibility="hidden";
+	document.getElementById("HardPic").style.visibility="hidden";
+	document.getElementById("EasyPicGlow").style.visibility="hidden";
+	document.getElementById("MediPicGlow").style.visibility="hidden";
+	document.getElementById("HardPicGlow").style.visibility="hidden";
+
+
+	Comp=Param;
+	var xtm=parseInt(document.getElementById("UITime").value);
+	if (xtm==NaN || xtm<=1) xtm=10;
+	xtm*=1000;
+	Board.MaxTime=xtm;
+	var xtm=parseInt(document.getElementById("UIInt").value);
+	if (xtm==NaN || xtm<=0) xtm=6;
+	Board.MaxDepth=xtm;
+	Board.BeginGame();
+
+for (var FFY=0;FFY<=7;FFY++)
+{
+for (var FFX=0;FFX<=7;FFX++)
+{
+if (Board.Color[FFX+8*FFY]!=Board.EMPTY)
+{
+var u=new Image();
+  u.className="Kostka";
+  u.onclick=new Function("BoardClick("+FFX+","+FFY+");");
+	u.id=""+FFX+""+FFY+"";
+	u.style.zIndex=2;
+	u.style.left=FFX*100.0/8.0+"%";
+	u.style.top=FFY*100.0/8.0+"%";
+	u.src=Face(FFX+8*FFY);
+document.getElementById("SpanBoard").appendChild(u);
+}
+}
+}
+
+
+
+/*
+for (var FFY=0;FFY<=1;FFY++)
+{
+for (var FFX=0;FFX<=7;FFX++)
+{
+var u=document.getElementById(FFX+""+FFY);
+u.src=Face(FFX+8*FFY);
+}
+}
+for (var FFY=6;FFY<=7;FFY++)
+{
+for (var FFX=0;FFX<=7;FFX++)
+{
+var u=document.getElementById(FFX+""+FFY);
+u.src=Face(FFX+8*FFY);
+}
+}*/
+
+	EndTurn();
+}
+function MenuHelp()
+{
+	if (document.getElementById("HELP").style.visibility=="hidden")
+	{
+		document.getElementById("HELP").innerHTML=
+		Texts['TFM'][Board.ChessVari][lang]+"<BR>"+Texts['TFM'][lang];
+		document.getElementById("HELP").style.visibility="visible";
+	}
+	else
+	document.getElementById("HELP").style.visibility="hidden";
+}
+function Lang(NewLng)
+{
+	lang=NewLng;
+	document.getElementById("BackLabel").innerHTML=Texts['BackLabel'][lang];
+	document.getElementById("UITimeLabel").innerHTML=Texts['UITimeLabel'][lang];
+	document.getElementById("UIIntLabel").innerHTML=Texts['UIIntLabel'][lang];
+
+	document.getElementById("Aut").innerHTML=Texts['Author'][lang]+": Vladimír Pribylinec";
+	document.getElementById("Ja").innerHTML=Texts['Programmer'][lang]+": Martin Holeček";
+	//++prepsat popisky menu
+}
+function HideLang(NewLng) //pouze pro vnejsi nastaveni
+{
+	Lang(NewLng);
+	document.getElementById("lcz").style.visibility="hidden";
+	document.getElementById("lsk").style.visibility="hidden";
+	document.getElementById("len").style.visibility="hidden";
+	document.getElementById("lde").style.visibility="hidden";
+}
+function ShowLang() //pouze pro vnejsi nastaveni
+{
+	document.getElementById("lcz").style.visibility="visible";
+	document.getElementById("lsk").style.visibility="visible";
+	document.getElementById("len").style.visibility="visible";
+	document.getElementById("lde").style.visibility="visible";
+}
+function ShowChessVari()
+{
+	document.getElementById("chcb").style.visibility="visible";
+	document.getElementById("chcb0").style.visibility="visible";
+	document.getElementById("chcb1").style.visibility="visible";
+	document.getElementById("chcb2").style.visibility="visible";
+	document.getElementById("chcb3").style.visibility="visible";
+	document.getElementById("chcb4").style.visibility="visible";
+        document.getElementById("chcb7").style.visibility="visible";
+
+	document.getElementById("CV2").style.visibility="visible";
+
+}
+function SetChessVari(NewVari)
+{
+	Board.ChessVari=NewVari;
+	document.getElementById("CV0").style.visibility="hidden";
+	document.getElementById("CV1").style.visibility="hidden";
+	document.getElementById("CV2").style.visibility="hidden";
+	document.getElementById("CV3").style.visibility="hidden";
+	document.getElementById("CV4").style.visibility="hidden";
+        document.getElementById("CV7").style.visibility="hidden";
+	document.getElementById('CV'+NewVari).style.visibility="visible";
+
+	document.getElementById('chcb0').style.color="white";
+	document.getElementById('chcb1').style.color="white";
+	document.getElementById('chcb2').style.color="white";
+	document.getElementById("chcb3").style.color="white";
+	document.getElementById("chcb4").style.color="white";
+	document.getElementById("chcb7").style.color="white";
+	document.getElementById('chcb'+NewVari).style.color="blueviolet";
+}
+function SetHideChessVari(NewVari)
+{
+	SetChessVari(NewVari);
+	document.getElementById("chcb").style.visibility="hidden";
+	document.getElementById("chcb0").style.visibility="hidden";
+	document.getElementById("chcb1").style.visibility="hidden";
+	document.getElementById("chcb2").style.visibility="hidden";
+	document.getElementById("chcb3").style.visibility="hidden";
+	document.getElementById("chcb4").style.visibility="hidden";
+        document.getElementById("chcb7").style.visibility="hidden";
+	document.getElementById("CV0").style.visibility="hidden";
+	document.getElementById("CV1").style.visibility="hidden";
+	document.getElementById("CV2").style.visibility="hidden";
+	document.getElementById("CV3").style.visibility="hidden";
+	document.getElementById("CV4").style.visibility="hidden";
+	document.getElementById("CV7").style.visibility="hidden";
+	document.getElementById('CV'+NewVari).style.visibility="visible";
+}
+function BaseLoad()
+{
+	ShowLang();
+Lang('en');
+	ShowChessVari();
+	SetChessVari(4);
+}
+
+</script>
+
+</HEAD>
+<BODY onload="BaseLoad()">
+
+<style>IMG.Kostka{width: 12.5%; height: 12.5%; z-index: 2; position: absolute;
+padding: 0px; margin: 0px;}
+
+IMG.Pole{width: 12.5%; height: 12.5%; z-index: 0; position: absolute;
+padding: 0px; margin: 0px;}
+FONT.PolePopis{z-index: 0; position: absolute; padding: 0px; margin: 0px;}
+.BASE{POSITION: absolute; PADDING: 0px; MARGIN: 0px; border: 0px;}
+</style>
+
+<span id="HELP" class="BASE"
+style="Z-INDEX: 51; TEXT-ALIGN: left;
+ BACKGROUND-COLOR: white; WIDTH: 80%; HEIGHT: 60%;
+	VISIBILITY: hidden; TOP: 0%; LEFT: 10%;
+overflow: scroll;">
+HELP</span>
+
+<span id="Main" class="BASE"
+style="Z-INDEX: 50; TEXT-ALIGN: center; BACKGROUND-COLOR: blue; WIDTH: 100%; HEIGHT: 100%; VISIBILITY: visible; TOP: 0px; LEFT: 0px">
+<noscript>
+Hra vyžaduje prohlížeč který má povolený a podporuje javascript.
+This game needs javascript to be supported and enabled.
+</noscript>
+<img id="CV3" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="HC.jpg">
+<img id="CV2" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="PC.jpg">
+<img id="CV1" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="EC.jpg">
+<img id="CV0" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="CC.jpg">
+<img id="CV4" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="BC.jpg">
+<img id="CV7" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="CS.jpg">
+
+<span id="chcb" class="BASE" style="left: 0%; top: 10%; width: 100%; height: 40%; font-weight: bold;"><!--background-color: blue;-->
+<span id="chcb0" onclick="SetChessVari(0);" class="BASE"
+style="visibility: hidden; left: 5%; top: 10%; background-color: blue; font-size: 20; color: white;">CubicChess</span>
+<span id="chcb1" onclick="SetChessVari(1);" class="BASE"
+style="visibility: hidden; left: 30%; top: 10%; background-color: blue; font-size: 20; color: white;">ExcelChess</span>
+<span id="chcb2" onclick="SetChessVari(2);" class="BASE"
+style="visibility: hidden; left: 55%; top: 10%; background-color: blue; font-size: 20; color: blueviolet;">PassionChess</span>
+<span id="chcb3" onclick="SetChessVari(3);" class="BASE"
+style="visibility: hidden; left: 80%; top: 10%; background-color: blue; font-size: 20; color: white;">HoleChess</span>
+<span id="chcb4" onclick="SetChessVari(4);" class="BASE"
+style="visibility: hidden; left: 70%; top: 30%; background-color: blue; font-size: 20; color: white;">ButterflyChess</span>
+<span id="chcb7" onclick="SetChessVari(7);" class="BASE"
+style="visibility: hidden; left: 40%; top: 30%; background-color: blue; font-size: 20; color: white;">CubicShogi</span>
+</span>
+
+<font id="Aut" class="BASE" style="left: 10%; top: 20%; z-index: 1;
+color: yellow; font-weight: bold;">Autor: Vladimír Pribylinec</font>
+<font id="Ja" class="BASE" style="left: 10%; top: 25%; z-index: 1;
+color: yellow; font-weight: bold;">Naprogramoval: Martin Holeček</font>
+
+<img onclick="MenuButton(2)" class="BASE" style="left: 25%; top: 30%; width: 50%; height: 9%; z-index: 1;" src="2pl.png">
+<img onclick="MenuButton(1)" class="BASE" style="left: 25%; top: 40%; width: 50%; height: 9%; z-index: 1;" src="PvEW.png">
+<img onclick="MenuButton(0)" class="BASE" style="left: 25%; top: 50%; width: 50%; height: 9%; z-index: 1;" src="PvEB.png">
+<img onclick="MenuHelp()" class="BASE" style="left: 25%; top: 60%; width: 50%; height: 9%; z-index: 1;" src="Help.png">
+
+<img id="lcz" onclick="Lang('cz');" class="BASE" style="left: 0%; top: 0%; width: 25px; height: 12px; visibility: hidden; z-index: 1;" src="cz.png">
+<img id="lsk" onclick="Lang('sk');" class="BASE" style="left: 7%; top: 0%; width: 25px; height: 12px; visibility: hidden; z-index: 1;" src="sk.png">
+<img id="len" onclick="Lang('en');" class="BASE" style="left: 14%; top: 0%; width: 25px; height: 12px; visibility: hidden; z-index: 1;" src="uk.png">
+<img id="lde" onclick="Lang('de');" class="BASE" style="left: 21%; top: 0%; width: 25px; height: 12px; visibility: hidden; z-index: 1;" src="de.png">
+
+<span id="UIOPT" class="BASE" style="background-color: blue; left: 30%; top: 75%;
+width: 40%; height: 20%;">
+<img id="EasyPic" onclick="GoDifficulty(0)" class="BASE" style="left: 10%; top: 20%; width: 20%; visibility: visible;" src="GreenStar.png">
+<img id="EasyPicGlow" onclick="" class="BASE" style="left: 10%; top: 20%; width: 20%; visibility: hidden;" src="GreenStarSelected.png">
+
+<img id="MediPic" onclick="GoDifficulty(1)" class="BASE" style="left: 30%; top: 20%; width: 20%; visibility: hidden;" src="OrangeStar.png">
+<img id="MediPicGlow" onclick="" class="BASE" style="left: 30%; top: 20%; width: 20%; visibility: visible;" src="OrangeStarSelected.png">
+
+<img id="HardPic" onclick="GoDifficulty(2)" class="BASE" style="left: 50%; top: 20%; width: 20%; visibility: visible;" src="BlueStar.png">
+<img id="HardPicGlow" onclick="" class="BASE" style="left: 50%; top: 20%; width: 20%; visibility: hidden;" src="BlueStarSelected.png">
+
+<label id="UIIntLabel" for="UIInt" style="visibility: visible; color: yellow;"><!--Počítač promýšlí půltahů:-->Obtížnost</label><BR>
+<input id="UIInt" type="text" size="10" name="UIInt" value="6" style="visibility: hidden;"><BR>
+<label id="UITimeLabel" for="UITime" style="visibility: hidden;">Počítač přemýšlí sekund:</label><BR>
+<input id="UITime" type="text" size="10" name="UITime" value="10" style="visibility: hidden;"><BR>
+<img onclick=>
+</span>
+
+</span>
+
+<span id="Box" style="Z-INDEX: 100; POSITION: absolute; TEXT-ALIGN: center; PADDING-BOTTOM: 0px; BACKGROUND-COLOR: white; MARGIN: 0px; PADDING-LEFT: 0px; WIDTH: 80%; PADDING-RIGHT: 0px; HEIGHT: 20%; VISIBILITY: hidden; TOP: 40%; PADDING-TOP: 0px; LEFT: 10%">
+<font id="BoxMessage" style="VISIBILITY: hidden; positon: absolute;"></font>
+<a id="BoxButton" onclick="location.reload();Lang(lang);" style="VISIBILITY: hidden"><img src="okflag.jpg"></a>
+</span>
+
+<span id="CC" class="BASE" style="Z-INDEX: 99; POSITION: absolute; TEXT-ALIGN: center; BACKGROUND-COLOR: white; WIDTH: 80%; HEIGHT: 60%; VISIBILITY: hidden; TOP: 20%; LEFT: 10%"
+onclick="CCChangeClick();">
+
+<img id="0ifopic" src="0.png" onclick="MorphClick(0);" class="BASE" style="TOP: 2%; LEFT: 25%; width: 20%; height: 26%; visibility: hidden;">
+<font id="0ifo" class="BASE" style="top: 13%; left: 40%; visibility: hidden;">0</font>
+
+<img id="6ifopic" src="6.png" onclick="MorphClick(0);" class="BASE" style="TOP: 2%; LEFT: 50%; width: 20%; height: 26%; visibility: hidden;">
+<font id="6ifo" class="BASE" style="top: 13%; left: 65%; visibility: hidden;">0</font>
+
+
+<img src="3.png" onclick="MorphClick(3);" class="BASE" style="TOP: 25%; LEFT: 0%; width: 20%; height: 26%;">
+<font id="3ifo" class="BASE" style="top: 35%; left: 20%;">0</font>
+<img src="1.png" onclick="MorphClick(1);" class="BASE" style="TOP: 25%; LEFT: 25%; width: 20%; height: 26%;">
+<font id="1ifo" class="BASE" style="top: 35%; left: 45%;">0</font>
+<img src="2.png" onclick="MorphClick(2);" class="BASE" style="TOP: 25%; LEFT: 50%; width: 20%; height: 26%;">
+<font id="2ifo" class="BASE" style="top: 35%; left: 70%;">0</font>
+<img src="4.png" onclick="MorphClick(4);" class="BASE" style="TOP: 25%; LEFT: 75%; width: 20%; height: 26%;">
+<font id="4ifo" class="BASE" style="top: 35%; left: 95%;">0</font>
+
+<img src="9.png" onclick="MorphClick(3);" class="BASE" style="TOP: 45%; LEFT: 0%; width: 20%; height: 26%;">
+<font id="9ifo" class="BASE" style="top: 65%; left: 20%;">0</font>
+<img src="7.png" onclick="MorphClick(1);" class="BASE" style="TOP: 45%; LEFT: 25%; width: 20%; height: 26%;">
+<font id="7ifo" class="BASE" style="top: 65%; left: 45%;">0</font>
+<img src="8.png" onclick="MorphClick(2);" class="BASE" style="TOP: 45%; LEFT: 50%; width: 20%; height: 26%;">
+<font id="8ifo" class="BASE" style="top: 65%; left: 70%;">0</font>
+<img src="10.png" onclick="MorphClick(4);" class="BASE" style="TOP: 45%; LEFT: 75%; width: 20%; height: 26%;">
+<font id="10ifo" class="BASE" style="top: 65%; left: 95%;">0</font>
+<font id="CCTODO" class="BASE" style="top: 85%;"></font>
+</span>
+
+
+<!--<span ID="InfoMsg" style="left: 0%; top: 0%; position: absolute; padding: 0px; margin: 0px; visibility: hidden; z-index: 100;
+BACKGROUND-COLOR: yellow;">
+Počítač přemýšlí
+</span>       -->
+
+<span class="BASE" style="Z-INDEX: 0;
+WIDTH: 100%; HEIGHT: 100%; TOP: 0px; LEFT: 0px; background-color: white;">
+
+<span id="Progbar" style="TOP: 97.5%; LEFT: 0%; HEIGHT: 2.5%;
+ Width: 100%; POSITION: absolute; PADDING: 0px; MARGIN: 0px; border: 0px; VISIBILITY: visible;
+ OVERFLOW: hidden;">
+<img src="vpercentback.png" class="BASE" style="Z-INDEX: 0; WIDTH: 100%; HEIGHT: 100%; TOP: 0%; LEFT: 0%;">
+<img src="vpercent.png" id="Progress" class="BASE" style="Z-INDEX: 1; WIDTH: 100%; HEIGHT: 100%; TOP: 0%;  LEFT: 0%;">
+<img src="vprogress2.png" class="BASE" style="Z-INDEX: 2; WIDTH: 100%; HEIGHT: 100%; TOP: 0%; LEFT: 0%">
+<span id="progmsg" class="BASE" style="left: 40%; top: 0%; z-index: 5;"> </span>
+</span>
+
+<font class="PolePopis" style="left: 5.9375%; top: 94.5%;">A</font>
+<font class="PolePopis" style="left: 17.8125%; top: 94.5%;">B</font>
+<font class="PolePopis" style="left: 29.6875%; top: 94.5%;">C</font>
+<font class="PolePopis" style="left: 41.5625%; top: 94.5%;">D</font>
+<font class="PolePopis" style="left: 53.4375%; top: 94.5%;">E</font>
+<font class="PolePopis" style="left: 65.3125%; top: 94.5%;">F</font>
+<font class="PolePopis" style="left: 77.1875%; top: 94.5%;">G</font>
+<font class="PolePopis" style="left: 89.0625%; top: 94.5%;">H</font>
+
+<font class="PolePopis" style="top: 5.9375%; left: 95%;">8</font>
+<font class="PolePopis" style="top: 17.8125%; left: 95%;">7</font>
+<font class="PolePopis" style="top: 29.6875%; left: 95%;">6</font>
+<font class="PolePopis" style="top: 41.5625%; left: 95%;">5</font>
+<font class="PolePopis" style="top: 53.4375%; left: 95%;">4</font>
+<font class="PolePopis" style="top: 65.3125%; left: 95%;">3</font>
+<font class="PolePopis" style="top: 77.1875%; left: 95%;">2</font>
+<font class="PolePopis" style="top: 89.0625%; left: 95%;">1</font>
+
+<img onclick="location.reload();" class="BASE" style="left: 95%; top: 0%; width: 5%; height: 5%; z-index: 20;" src="exit.png">
+
+<img onclick="Back();" src="back.png" class="BASE" style="left: 92%; top: 92%; height: 6%; width: 6%; z-index: 20;">
+<font onclick="Back();" id="BackLabel" class="BASE" style="left: 93%; top: 93%; z-index: 21;">Zpět</font>
+
+<span id="SpanBoard" class="BASE" style="Z-INDEX: 0;
+WIDTH: 95%; HEIGHT: 95%; TOP: 0px; LEFT: 0px">
+
+<img id="Select" src="Selection.png" style="Z-INDEX: 1; POSITION: absolute; PADDING: 0px; MARGIN: 0px; WIDTH: 12.5%; HEIGHT: 12.5%; VISIBILITY: hidden; TOP: 0%; LEFT: 0%">
+
+<img src="C.png" onclick="BoardClick(0,1);" class="Pole" style="TOP: 12.5%; LEFT: 0%">
+<img src="C.png" onclick="BoardClick(0,3);" class="Pole" style="TOP: 37.5%; LEFT: 0%">
+<img src="C.png" onclick="BoardClick(0,5);" class="Pole" style="TOP: 62.5%; LEFT: 0%">
+<img src="C.png" onclick="BoardClick(0,7);" class="Pole" style="TOP: 87.5%; LEFT: 0%">
+
+<img src="B.png" onclick="BoardClick(0,0);" class="Pole" style="TOP: 0%; LEFT: 0%">
+<img src="B.png" onclick="BoardClick(0,2);" class="Pole" style="TOP: 25%; LEFT: 0%">
+<img src="B.png" onclick="BoardClick(0,4);" class="Pole" style="TOP: 50%; LEFT: 0%">
+<img src="B.png" onclick="BoardClick(0,6);" class="Pole" style="TOP: 75%; LEFT: 0%">
+
+
+<img src="C.png" onclick="BoardClick(1,0);" class="Pole" style="TOP: 0%; LEFT: 12.5%">
+<img src="C.png" onclick="BoardClick(1,2);" class="Pole" style="TOP: 25%; LEFT: 12.5%">
+<img src="C.png" onclick="BoardClick(1,4);" class="Pole" style="TOP: 50%; LEFT: 12.5%">
+<img src="C.png" onclick="BoardClick(1,6);" class="Pole" style="TOP: 75%; LEFT: 12.5%">
+
+<img src="B.png" onclick="BoardClick(1,1);" class="Pole" style="TOP: 12.5%; LEFT: 12.5%">
+<img src="B.png" onclick="BoardClick(1,3);" class="Pole" style="TOP: 37.5%; LEFT: 12.5%">
+<img src="B.png" onclick="BoardClick(1,5);" class="Pole" style="TOP: 62.5%; LEFT: 12.5%">
+<img src="B.png" onclick="BoardClick(1,7);" class="Pole" style="TOP: 87.5%; LEFT: 12.5%">
+
+<img src="B.png" onclick="BoardClick(2,0);" class="Pole" style="TOP: 0%; LEFT: 25%">
+<img src="B.png" onclick="BoardClick(2,2);" class="Pole" style="TOP: 25%; LEFT: 25%">
+<img src="B.png" onclick="BoardClick(2,4);" class="Pole" style="TOP: 50%; LEFT: 25%">
+<img src="B.png" onclick="BoardClick(2,6);" class="Pole" style="TOP: 75%; LEFT: 25%">
+
+<img src="C.png" onclick="BoardClick(2,1);" class="Pole" style="TOP: 12.5%; LEFT: 25%">
+<img src="C.png" onclick="BoardClick(2,3);" class="Pole" style="TOP: 37.5%; LEFT: 25%">
+<img src="C.png" onclick="BoardClick(2,5);" class="Pole" style="TOP: 62.5%; LEFT: 25%">
+<img src="C.png" onclick="BoardClick(2,7);" class="Pole" style="TOP: 87.5%; LEFT: 25%">
+
+
+<img src="C.png" onclick="BoardClick(3,0);" class="Pole" style="TOP: 0%; LEFT: 37.5%">
+<img src="C.png" onclick="BoardClick(3,2);" class="Pole" style="TOP: 25%; LEFT: 37.5%">
+<img src="C.png" onclick="BoardClick(3,4);" class="Pole" style="TOP: 50%; LEFT: 37.5%">
+<img src="C.png" onclick="BoardClick(3,6);" class="Pole" style="TOP: 75%; LEFT: 37.5%">
+
+<img src="B.png" onclick="BoardClick(3,1);" class="Pole" style="TOP: 12.5%; LEFT: 37.5%">
+<img src="B.png" onclick="BoardClick(3,3);" class="Pole" style="TOP: 37.5%; LEFT: 37.5%">
+<img src="B.png" onclick="BoardClick(3,5);" class="Pole" style="TOP: 62.5%; LEFT: 37.5%">
+<img src="B.png" onclick="BoardClick(3,7);" class="Pole" style="TOP: 87.5%; LEFT: 37.5%">
+
+<img src="B.png" onclick="BoardClick(4,0);" class="Pole" style="TOP: 0%; LEFT: 50%">
+<img src="B.png" onclick="BoardClick(4,2);" class="Pole" style="TOP: 25%; LEFT: 50%">
+<img src="B.png" onclick="BoardClick(4,4);" class="Pole" style="TOP: 50%; LEFT: 50%">
+<img src="B.png" onclick="BoardClick(4,6);" class="Pole" style="TOP: 75%; LEFT: 50%">
+
+<img src="C.png" onclick="BoardClick(4,1);" class="Pole" style="TOP: 12.5%; LEFT: 50%">
+<img src="C.png" onclick="BoardClick(4,3);" class="Pole" style="TOP: 37.5%; LEFT: 50%">
+<img src="C.png" onclick="BoardClick(4,5);" class="Pole" style="TOP: 62.5%; LEFT: 50%">
+<img src="C.png" onclick="BoardClick(4,7);" class="Pole" style="TOP: 87.5%; LEFT: 50%">
+
+
+<img src="C.png" onclick="BoardClick(5,0);" class="Pole" style="TOP: 0%; LEFT: 62.5%">
+<img src="C.png" onclick="BoardClick(5,2);" class="Pole" style="TOP: 25%; LEFT: 62.5%">
+<img src="C.png" onclick="BoardClick(5,4);" class="Pole" style="TOP: 50%; LEFT: 62.5%">
+<img src="C.png" onclick="BoardClick(5,6);" class="Pole" style="TOP: 75%; LEFT: 62.5%">
+
+<img src="B.png" onclick="BoardClick(5,1);" class="Pole" style="TOP: 12.5%; LEFT: 62.5%">
+<img src="B.png" onclick="BoardClick(5,3);" class="Pole" style="TOP: 37.5%; LEFT: 62.5%">
+<img src="B.png" onclick="BoardClick(5,5);" class="Pole" style="TOP: 62.5%; LEFT: 62.5%">
+<img src="B.png" onclick="BoardClick(5,7);" class="Pole" style="TOP: 87.5%; LEFT: 62.5%">
+
+<img src="B.png" onclick="BoardClick(6,0);" class="Pole" style="TOP: 0%; LEFT: 75%">
+<img src="B.png" onclick="BoardClick(6,2);" class="Pole" style="TOP: 25%; LEFT: 75%">
+<img src="B.png" onclick="BoardClick(6,4);" class="Pole" style="TOP: 50%; LEFT: 75%">
+<img src="B.png" onclick="BoardClick(6,6);" class="Pole" style="TOP: 75%; LEFT: 75%">
+
+<img src="C.png" onclick="BoardClick(6,1);" class="Pole" style="TOP: 12.5%; LEFT: 75%">
+<img src="C.png" onclick="BoardClick(6,3);" class="Pole" style="TOP: 37.5%; LEFT: 75%">
+<img src="C.png" onclick="BoardClick(6,5);" class="Pole" style="TOP: 62.5%; LEFT: 75%">
+<img src="C.png" onclick="BoardClick(6,7);" class="Pole" style="TOP: 87.5%; LEFT: 75%">
+
+<img src="C.png" onclick="BoardClick(7,0);" class="Pole" style="TOP: 0%; LEFT: 87.5%">
+<img src="C.png" onclick="BoardClick(7,2);" class="Pole" style="TOP: 25%; LEFT: 87.5%">
+<img src="C.png" onclick="BoardClick(7,4);" class="Pole" style="TOP: 50%; LEFT: 87.5%">
+<img src="C.png" onclick="BoardClick(7,6);" class="Pole" style="TOP: 75%; LEFT: 87.5%">
+
+<img src="B.png" onclick="BoardClick(7,1);" class="Pole" style="TOP: 12.5%; LEFT: 87.5%">
+<img src="B.png" onclick="BoardClick(7,3);" class="Pole" style="TOP: 37.5%; LEFT: 87.5%">
+<img src="B.png" onclick="BoardClick(7,5);" class="Pole" style="TOP: 62.5%; LEFT: 87.5%">
+<img src="B.png" onclick="BoardClick(7,7);" class="Pole" style="TOP: 87.5%; LEFT: 87.5%">
+
+<!--
+<img src="0.png" id="76" onclick="BoardClick(7,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 87.5%">
+<img src="0.png" id="66" onclick="BoardClick(6,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 75%">
+<img src="0.png" id="56" onclick="BoardClick(5,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 62.5%">
+<img src="0.png" id="46" onclick="BoardClick(4,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 50%">
+<img src="0.png" id="36" onclick="BoardClick(3,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 37.5%">
+<img src="0.png" id="26" onclick="BoardClick(2,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 25%">
+<img src="0.png" id="16" onclick="BoardClick(1,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 12.5%">
+<img src="0.png" id="06" onclick="BoardClick(0,6);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 75%; LEFT: 0%">
+
+<img src="3.png" id="77" onclick="BoardClick(7,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 87.5%">
+<img src="1.png" id="67" onclick="BoardClick(6,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 75%">
+<img src="2.png" id="57" onclick="BoardClick(5,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 62.5%">
+<img src="5.png" id="47" onclick="BoardClick(4,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 50%">
+<img src="4.png" id="37" onclick="BoardClick(3,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 37.5%">
+<img src="2.png" id="27" onclick="BoardClick(2,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 25%">
+<img src="1.png" id="17" onclick="BoardClick(1,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 12.5%">
+<img src="3.png" id="07" onclick="BoardClick(0,7);" side="0" class="Kostka" style="Z-INDEX: 2; TOP: 87.5%; LEFT: 0%">
+
+<img src="6.png" id="71" onclick="BoardClick(7,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 87.5%">
+<img src="6.png" id="61" onclick="BoardClick(6,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 75%">
+<img src="6.png" id="51" onclick="BoardClick(5,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 62.5%">
+<img src="6.png" id="41" onclick="BoardClick(4,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 50%">
+<img src="6.png" id="31" onclick="BoardClick(3,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 37.5%">
+<img src="6.png" id="21" onclick="BoardClick(2,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 25%">
+<img src="6.png" id="11" onclick="BoardClick(1,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 12.5%">
+<img src="6.png" id="01" onclick="BoardClick(0,1);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 12.5%; LEFT: 0%">
+
+<img src="9.png" id="70" onclick="BoardClick(7,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 87.5%">
+<img src="7.png" id="60" onclick="BoardClick(6,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 75%">
+<img src="8.png" id="50" onclick="BoardClick(5,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 62.5%">
+<img src="11.png" id="40" onclick="BoardClick(4,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 50%">
+<img src="10.png" id="30" onclick="BoardClick(3,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 37.5%">
+<img src="8.png" id="20" onclick="BoardClick(2,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 25%">
+<img src="7.png" id="10" onclick="BoardClick(1,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 12.5%">
+<img src="9.png" id="00" onclick="BoardClick(0,0);" side="1" class="Kostka" style="Z-INDEX: 2; TOP: 0%; LEFT: 0%">
+-->
+
+</span>
+</span>
+
+</BODY>
+</HTML>
