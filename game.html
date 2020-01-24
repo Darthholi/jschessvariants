@@ -1,6 +1,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs">
 <HEAD>
 
+<meta charset="utf-8"/>
+
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1250" />
 
 <meta http-equiv="Content-Language" content="cs" />
@@ -8,9 +10,13 @@
 <SCRIPT LANGUAGE="JavaScript" SRC="TBoard.js"></SCRIPT>
 <script>
 /*
-info momentalni tah a hrac na tahu,  
+A graphical UI for the javascript chess engine based on TSCP.
+
+
+This work is distributed under a kind acknowledgement of the original author of the chess engine, TSCP, and so remains under a copyright (2019) by Tom Kerrigan.
+For more detail see http://www.tckerrigan.com/Chess/TSCP/
+
 */
-//pocatecni inicializace
 var SelectionX=-1;
 var SelectionY=-1;
 var Board=new TBoard();
@@ -19,91 +25,91 @@ var Waiting=false;
 var Moving=false;
 var lang='cz';
 
-//nastaveni UI
+//UI
 Board.MaxTime=30000;
 Board.MaxDepth=6;
 var CheckEndFunc;
 
-//nastaveni animaci:
+//animations
 var Animtime=1000.0;
 var AnimDelay=100.0;
-// pocitac hraje za hrace: (2==nehraje)
+// 0, 1== computer plays (2== not)
 var Comp=1;
 
 //
 var Texts=new Array();
 Texts['remis']=new Array();
-Texts['remis']['cz']="Hra zkonèila remízou";
-Texts['remis']['sk']="Hra zkonèila remízou";
+Texts['remis']['cz']="Hra zkonï¿½ila remï¿½zou";
+Texts['remis']['sk']="Hra zkonï¿½ila remï¿½zou";
 Texts['remis']['en']="The game ended with remis";
 Texts['remis']['de']="Remisen";
 Texts['PvEWin']=new Array();
-Texts['PvEWin']['cz']="Vyhrál jste!";
-Texts['PvEWin']['sk']="Vyhrál jste!";
+Texts['PvEWin']['cz']="Vyhrï¿½l jste!";
+Texts['PvEWin']['sk']="Vyhrï¿½l jste!";
 Texts['PvEWin']['en']="You have won!";
 Texts['PvEWin']['de']="Du hast gewinnen!";
 Texts['PvELose']=new Array();
-Texts['PvELose']['cz']="Prohrál jste";
-Texts['PvELose']['sk']="Prohrál jste";
+Texts['PvELose']['cz']="Prohrï¿½l jste";
+Texts['PvELose']['sk']="Prohrï¿½l jste";
 Texts['PvELose']['en']="You have lost";
 Texts['PvELose']['de']="Du hast verlort";
 Texts['PvPlocal']=new Array(2);
 Texts['PvPlocal'][0]=new Array();
 Texts['PvPlocal'][1]=new Array();
-Texts['PvPlocal'][0]['cz']="Bílı vıhrál!";
-Texts['PvPlocal'][0]['sk']="Bílı vıhrál!";
+Texts['PvPlocal'][0]['cz']="Bï¿½lï¿½ vï¿½hrï¿½l!";
+Texts['PvPlocal'][0]['sk']="Bï¿½lï¿½ vï¿½hrï¿½l!";
 Texts['PvPlocal'][0]['en']="White won!";
-Texts['PvPlocal'][0]['de']="Weiß hat gewinnen!";
-Texts['PvPlocal'][1]['cz']="Èernı vıhrál!";
-Texts['PvPlocal'][1]['sk']="Èernı vıhrál!e";
+Texts['PvPlocal'][0]['de']="Weiï¿½ hat gewinnen!";
+Texts['PvPlocal'][1]['cz']="ï¿½ernï¿½ vï¿½hrï¿½l!";
+Texts['PvPlocal'][1]['sk']="ï¿½ernï¿½ vï¿½hrï¿½l!e";
 Texts['PvPlocal'][1]['en']="Black have won!";
 Texts['PvPlocal'][1]['de']="Schwarz hat gewinnen!";
 Texts['CCTODO']=new Array();
-Texts['CCTODO']['cz']="V horní øadì jsou volné figury pro èerného hráèe, v dolní pro bílého. Klikem na figuru zmìníte právì vybraného pìšce a tím odehrajete tah. Klikem na figuru kterou nemáte nebo kamkoli jinam zavøete toto okno.";
-Texts['CCTODO']['sk']="V horní øadì jsou volné figury pro èerného hráèe, v dolní pro bílého. Klikem na figuru zmìníte právì vybraného pìšce a tím odehrajete tah. Klikem na figuru kterou nemáte nebo kamkoli jinam zavøete toto okno.";
+Texts['CCTODO']['cz']="V hornï¿½ ï¿½adï¿½ jsou volnï¿½ figury pro ï¿½ernï¿½ho hrï¿½ï¿½e, v dolnï¿½ pro bï¿½lï¿½ho. Klikem na figuru zmï¿½nï¿½te prï¿½vï¿½ vybranï¿½ho pï¿½ce a tï¿½m odehrajete tah. Klikem na figuru kterou nemï¿½te nebo kamkoli jinam zavï¿½ete toto okno.";
+Texts['CCTODO']['sk']="V hornï¿½ ï¿½adï¿½ jsou volnï¿½ figury pro ï¿½ernï¿½ho hrï¿½ï¿½e, v dolnï¿½ pro bï¿½lï¿½ho. Klikem na figuru zmï¿½nï¿½te prï¿½vï¿½ vybranï¿½ho pï¿½ce a tï¿½m odehrajete tah. Klikem na figuru kterou nemï¿½te nebo kamkoli jinam zavï¿½ete toto okno.";
 Texts['CCTODO']['en']="Availible pieces for the black player are in the upper row, for white player in the bottom row. Play your turn by clicking the piece you want the selected pawn to change to. Clicking on not availible piece or anywhere else will close this window.";
-Texts['CCTODO']['de']="Stücke für die schwarzen Spieler sind in der oberen Reihe, für weiße Spieler in der unteren Reihe. Spielen Sie an der Reihe, indem Sie auf das Stück Sie das ausgewählte Spielfigur zu ändern. Mit einem Klick auf nicht availible Stück oder anderswo wird dieses Fenster schließen.";
+Texts['CCTODO']['de']="Stï¿½cke fï¿½r die schwarzen Spieler sind in der oberen Reihe, fï¿½r weiï¿½e Spieler in der unteren Reihe. Spielen Sie an der Reihe, indem Sie auf das Stï¿½ck Sie das ausgewï¿½hlte Spielfigur zu ï¿½ndern. Mit einem Klick auf nicht availible Stï¿½ck oder anderswo wird dieses Fenster schlieï¿½en.";
 Texts['BackLabel']=new Array();
-Texts['BackLabel']['cz']="Zpìt";
-Texts['BackLabel']['sk']="Zpìt";
+Texts['BackLabel']['cz']="Zpï¿½t";
+Texts['BackLabel']['sk']="Zpï¿½t";
 Texts['BackLabel']['en']="Back";
-Texts['BackLabel']['de']="Zurück";
+Texts['BackLabel']['de']="Zurï¿½ck";
 Texts['UIIntLabel']=new Array();
-Texts['UIIntLabel']['cz']="<!--Poèítaè promıšlí pùltahù:-->Obtínost (easy,medium,hard)";
-Texts['UIIntLabel']['sk']="<!--Poèítaè promıšlí pùltahù:-->Obtínost (easy,medium,hard)";
+Texts['UIIntLabel']['cz']="<!--Poï¿½ï¿½taï¿½ promï¿½ï¿½lï¿½ pï¿½ltahï¿½:-->Obtï¿½nost (easy,medium,hard)";
+Texts['UIIntLabel']['sk']="<!--Poï¿½ï¿½taï¿½ promï¿½ï¿½lï¿½ pï¿½ltahï¿½:-->Obtï¿½nost (easy,medium,hard)";
 Texts['UIIntLabel']['en']="<!--Number of halfturns computer thinks-->Difficulty (easy,medium,hard)";
 Texts['UIIntLabel']['de']="<!--Die Zerrunge der Computer denkt vor-->Difficulty (easy,medium,hard)";
 Texts['UITimeLabel']=new Array();
-Texts['UITimeLabel']['cz']="Poèítaè pøemıšlí sekund:";
-Texts['UITimeLabel']['sk']="Poèítaè pøemıšlí sekund:";
+Texts['UITimeLabel']['cz']="Poï¿½ï¿½taï¿½ pï¿½emï¿½ï¿½lï¿½ sekund:";
+Texts['UITimeLabel']['sk']="Poï¿½ï¿½taï¿½ pï¿½emï¿½ï¿½lï¿½ sekund:";
 Texts['UITimeLabel']['en']="Time computer has for thinking";
-Texts['UITimeLabel']['de']="Time der Computer hat für denken";
+Texts['UITimeLabel']['de']="Time der Computer hat fï¿½r denken";
 Texts['Author']=new Array();
 Texts['Author']['cz']="Autor";
 Texts['Author']['sk']="Autor";
 Texts['Author']['en']="Author";
 Texts['Author']['de']="Author";
 Texts['Programmer']=new Array();
-Texts['Programmer']['cz']="Naprogramoval";
-Texts['Programmer']['sk']="Naprogramoval";
-Texts['Programmer']['en']="Programmer";
-Texts['Programmer']['de']="Programmer";
+Texts['Programmer']['cz']="Na zÃ¡kladÄ› <a href='http://www.tckerrigan.com/Chess/TSCP/'>TSCP</a> naprogramoval ";
+Texts['Programmer']['sk']="Na zÃ¡kladÄ› <a href='http://www.tckerrigan.com/Chess/TSCP/'>TSCP</a> naprogramoval ";
+Texts['Programmer']['en']="Based on <a href='http://www.tckerrigan.com/Chess/TSCP/'>TSCP</a> programmed by ";
+Texts['Programmer']['de']="Based on <a href='http://www.tckerrigan.com/Chess/TSCP/'>TSCP</a> programmed by ";
 //---------------------------------------------------------------------------
 Texts['TFM']=new Array();
 Texts['TFM']['cz']="       \
-Ovlávání a pouívání programu.<BR>      \
-V hlavním menu lze vybrat pomocí tlaèítek (odshora:) hra dvou hráèù,  \
- hra za bílé proti poèítaèi, hra za èerné proti poèítaèi.     \
-Tah ve høe se provádí myší: vıbìrem figury a klikem na cílového pole, anebo na figuru v zásobníku vybranou na zámìnu figur (pro KŠ a HC).    \
-Vrácení tahu lze provést klikem na ikonku šipky vpravo dole.    \
-Exit vpravo nahoøe vzdá hru a vrátí zpìt do menu.";
+Ovlï¿½vï¿½nï¿½ a pouï¿½ï¿½vï¿½nï¿½ programu.<BR>      \
+V hlavnï¿½m menu lze vybrat pomocï¿½ tlaï¿½ï¿½tek (odshora:) hra dvou hrï¿½ï¿½ï¿½,  \
+ hra za bï¿½lï¿½ proti poï¿½ï¿½taï¿½i, hra za ï¿½ernï¿½ proti poï¿½ï¿½taï¿½i.     \
+Tah ve hï¿½e se provï¿½dï¿½ myï¿½ï¿½: vï¿½bï¿½rem figury a klikem na cï¿½lovï¿½ho pole, anebo na figuru v zï¿½sobnï¿½ku vybranou na zï¿½mï¿½nu figur (pro Kï¿½ a HC).    \
+Vrï¿½cenï¿½ tahu lze provï¿½st klikem na ikonku ï¿½ipky vpravo dole.    \
+Exit vpravo nahoï¿½e vzdï¿½ hru a vrï¿½tï¿½ zpï¿½t do menu.";
 Texts['TFM']['sk']="   \
-Ovládanie a pouívanie programu.<BR>    \
-V hlavnom menu je moné vybra pomocou tlaèítok (odhora) hra dvoch hráèov, hra \
-za bieleho proti poèítaèu, hra za èierneho proti poèítaèu. ah v hre se prevádza \
-myšou: vıberom  figúry a klikom na cie¾ového pole anebo na figúru v zásobníku \
-urèenú na zámenu figúr (pre KŠ a HC). Vrátenie ahu je moné previes klikom na ikonku šípky \
-vpravo dole. Exit vpravo hore vzdá hru a vráti spä do menu.";
+Ovlï¿½danie a pouï¿½ï¿½vanie programu.<BR>    \
+V hlavnom menu je moï¿½nï¿½ vybraï¿½ pomocou tlaï¿½ï¿½tok (odhora) hra dvoch hrï¿½ï¿½ov, hra \
+za bieleho proti poï¿½ï¿½taï¿½u, hra za ï¿½ierneho proti poï¿½ï¿½taï¿½u. ï¿½ah v hre se prevï¿½dza \
+myï¿½ou: vï¿½berom  figï¿½ry a klikom na cieï¿½ovï¿½ho pole anebo na figï¿½ru v zï¿½sobnï¿½ku \
+urï¿½enï¿½ na zï¿½menu figï¿½r (pre Kï¿½ a HC). Vrï¿½tenie ï¿½ahu je moï¿½nï¿½ previesï¿½ klikom na ikonku ï¿½ï¿½pky \
+vpravo dole. Exit vpravo hore vzdï¿½ hru a vrï¿½ti spï¿½ do menu.";
 Texts['TFM']['en']="        \
 How to use the program.<BR> \
 In the main menu, you can start the game (2 players, white vs PC and black vs PC, \
@@ -114,36 +120,36 @@ Small arrow in the right bottom corner will take back your turns. \
 Exit in the top right corner will take you back to the menu.";
 Texts['TFM']['de']="                \
 Wie man das Programm verwendet.<BR>  \
-Im Hauptmenü Sie kann das Spiel (2 Spieler, weiß gegen den Computer und  \
+Im Hauptmenï¿½ Sie kann das Spiel (2 Spieler, weiï¿½ gegen den Computer und  \
  Schwarzes gegen den Computer, in diesem Auftrag von oben bis unten) indem Sie auf \
- den Knöpfen beginnen klicken. Im Spiel können Sie ein Stück bestellen, um \
+ den Knï¿½pfen beginnen klicken. Im Spiel kï¿½nnen Sie ein Stï¿½ck bestellen, um \
  sich zu bewegen, indem Sie auf ihm und dann auf seinem Bestimmungsort \
  klicken. Kleiner Pfeil in der rechten unteren Ecke nimmt Ihre Umdrehungen \
- zurück. Ausgang in der Rechteecke endet das Spiel und nimmt Sie zurück zu \
- dem Menü.";
+ zurï¿½ck. Ausgang in der Rechteecke endet das Spiel und nimmt Sie zurï¿½ck zu \
+ dem Menï¿½.";
 //---------------------------------------------------------------------------
 Texts['TFM'][0]=new Array();//CC
 //---------------------------------------------------------------------------
-Texts['TFM'][0]['cz']="<h1>Pravidla kostkovıch šachù</h1> <dl> <dt>Autor:</dt> <dd>Vladimír Pribylinec</dd> </dl>Místo klasickıch figur jsou pouity kostky, které mají na kadé stranì samostatnì symbol krále, dámy,vìe, støelce, jezdce a pìšce. Aktuální hodnotu kostky urèuje symbol na její vrchní ploše. Základní pravidla jsou stejná jako v klasickıch šachách. Zrušena je promìna pìšce, kterı dosáhl poslední øady šachovnice. <!--a braní mimochodem (e.p). -->Kostky odstranìné ze šachovnice (kromì pìšcù) se bez otáèení odkládají do zásobníku vedle šachovnice. Hráè, kterı je na tahu, mùe buï táhnout kostkou podle symbolu na její vrchní ploše nebo otoèením kostky zmìnit libovolného pìšce za jinou figuru tak, aby se shodovala s figurou opaèné barvy v zásobníku. Tato kostka se okamitì ze zásobníku odstraní.\
-V programu se po dvojkliku na pìšce otevøe menu kde je vidìt poèet figur v zásobníku a klikem na figuru lze pìšce promìnit.\
+Texts['TFM'][0]['cz']="<h1>Pravidla kostkovï¿½ch ï¿½achï¿½</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r Pribylinec</dd> </dl>Mï¿½sto klasickï¿½ch figur jsou pouï¿½ity kostky, kterï¿½ majï¿½ na kaï¿½dï¿½ stranï¿½ samostatnï¿½ symbol krï¿½le, dï¿½my,vï¿½e, stï¿½elce, jezdce a pï¿½ce. Aktuï¿½lnï¿½ hodnotu kostky urï¿½uje symbol na jejï¿½ vrchnï¿½ ploï¿½e. Zï¿½kladnï¿½ pravidla jsou stejnï¿½ jako v klasickï¿½ch ï¿½achï¿½ch. Zruï¿½ena je promï¿½na pï¿½ce, kterï¿½ dosï¿½hl poslednï¿½ ï¿½ady ï¿½achovnice. <!--a branï¿½ mimochodem (e.p). -->Kostky odstranï¿½nï¿½ ze ï¿½achovnice (kromï¿½ pï¿½cï¿½) se bez otï¿½ï¿½enï¿½ odklï¿½dajï¿½ do zï¿½sobnï¿½ku vedle ï¿½achovnice. Hrï¿½ï¿½, kterï¿½ je na tahu, mï¿½ï¿½e buï¿½ tï¿½hnout kostkou podle symbolu na jejï¿½ vrchnï¿½ ploï¿½e nebo otoï¿½enï¿½m kostky zmï¿½nit libovolnï¿½ho pï¿½ce za jinou figuru tak, aby se shodovala s figurou opaï¿½nï¿½ barvy v zï¿½sobnï¿½ku. Tato kostka se okamï¿½itï¿½ ze zï¿½sobnï¿½ku odstranï¿½.\
+V programu se po dvojkliku na pï¿½ce otevï¿½e menu kde je vidï¿½t poï¿½et figur v zï¿½sobnï¿½ku a klikem na figuru lze pï¿½ce promï¿½nit.\
 <hr />\
-<p>Pravidla hry byla publikována v èlánku <i>Cubic Developments..., in Variant Chess 48, May 2005, the British Chess Variants Society, page 59</i> </p>";
+<p>Pravidla hry byla publikovï¿½na v ï¿½lï¿½nku <i>Cubic Developments..., in Variant Chess 48, May 2005, the British Chess Variants Society, page 59</i> </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][0]['sk']="<h1>Pravidlá kockového šachu</h1> <dl> <dt>Autor:</dt>\
-<dd>Vladimír Pribylinec</dd> </dl>\
+Texts['TFM'][0]['sk']="<h1>Pravidlï¿½ kockovï¿½ho ï¿½achu</h1> <dl> <dt>Autor:</dt>\
+<dd>Vladimï¿½r Pribylinec</dd> </dl>\
 <p>\
-Namiesto klasickıch figúr sú pouité kocky, ktoré majú na kadej strane samostatne symbol\
-kráa, dámy, vee, strelca, jazdca a pešiaka.\
-Aktuálnu hodnotu kocky urèuje symbol na jej vrchnej ploche.\
-Základné pravidlá sú rovnaké ako v klasickom šachu.\
-Zrušená je premena pešiaka, ktorı dosiahol poslednı rad šachovnice. <!-- a branie mimochodom (e.p.).-->\
-Kocky odstránené zo šachovnice (okrem pešiakov) sa bez otáèania odkladajú do zásobníka veda šachovnice.\
-Hráè, ktorı je na ahu, môe buï aha kockou poda symbolu na jej vrchnej ploche alebo otoèením kocky zmeni ¾ubovolného pešiaka za inú figúru tak, aby sa zhodovala s figúrou opaènej farby v zásobníku. Táto kocka sa okamite zo zásobníka odstráni.\
-V programu se po dvojkliku na pìšce otevøe menu kde je vidìt poèet figur v zásobníku a klikem na figuru lze pìšce promìnit.\
+Namiesto klasickï¿½ch figï¿½r sï¿½ pouï¿½itï¿½ kocky, ktorï¿½ majï¿½ na kaï¿½dej strane samostatne symbol\
+krï¿½a, dï¿½my, veï¿½e, strelca, jazdca a peï¿½iaka.\
+Aktuï¿½lnu hodnotu kocky urï¿½uje symbol na jej vrchnej ploche.\
+Zï¿½kladnï¿½ pravidlï¿½ sï¿½ rovnakï¿½ ako v klasickom ï¿½achu.\
+Zruï¿½enï¿½ je premena peï¿½iaka, ktorï¿½ dosiahol poslednï¿½ rad ï¿½achovnice. <!-- a branie mimochodom (e.p.).-->\
+Kocky odstrï¿½nenï¿½ zo ï¿½achovnice (okrem peï¿½iakov) sa bez otï¿½ï¿½ania odkladajï¿½ do zï¿½sobnï¿½ka vedï¿½a ï¿½achovnice.\
+Hrï¿½ï¿½, ktorï¿½ je na ï¿½ahu, mï¿½ï¿½e buï¿½ ï¿½ahaï¿½ kockou podï¿½a symbolu na jej vrchnej ploche alebo otoï¿½enï¿½m kocky zmeniï¿½ ï¿½ubovolnï¿½ho peï¿½iaka za inï¿½ figï¿½ru tak, aby sa zhodovala s figï¿½rou opaï¿½nej farby v zï¿½sobnï¿½ku. Tï¿½to kocka sa okamï¿½ite zo zï¿½sobnï¿½ka odstrï¿½ni.\
+V programu se po dvojkliku na pï¿½ce otevï¿½e menu kde je vidï¿½t poï¿½et figur v zï¿½sobnï¿½ku a klikem na figuru lze pï¿½ce promï¿½nit.\
 </p>";
 //---------------------------------------------------------------------------
 Texts['TFM'][0]['en']="<h1>Cubic Chess Rules</h1> <dl> <dt>Author:</dt>\
-<dd>Vladimír Pribylinec</dd>\
+<dd>Vladimï¿½r Pribylinec</dd>\
 </dl>\
 <p>\
 The traditional men are substitued by the cubes, which have on each side displayed respectively a king, queen, pawn, bishop, knight and rook. The current value of the cube is determined by the symbol uppermost.\
@@ -151,7 +157,7 @@ The basic rules are the same like in the orthochess.\
 Eliminated are the promotion of the pawn reaching the last rank <!--and e.p. capture.-->\
 Captured men (not pawns) are put without rotation into a 'stock' next to the board.\
 A player on turn may either move a man (whose image is displayed uppermost) or may change any pawn on the board by rotating of the cube to show a man of the same kind as the contrary colored man in the stock. This cube is immediately removed from the stock.\
-Durch Doppelklick auf das Pfand ingame, können Sie öffnen Sie das Menü mit allen Stück auf Lager und ändern Sie den Bauern.\
+Durch Doppelklick auf das Pfand ingame, kï¿½nnen Sie ï¿½ffnen Sie das Menï¿½ mit allen Stï¿½ck auf Lager und ï¿½ndern Sie den Bauern.\
 </p>\
  <hr /> \
 <p><em>Rules of the game where published in\
@@ -159,14 +165,14 @@ article Cubic Developments... in\
 Variant Chess 48, May 2005, the British Chess\
 Variants Society, page 59 </em></p><em>  </em>";
 //---------------------------------------------------------------------------
-Texts['TFM'][0]['de']="<h1>Regeln des Würfel Schach</h1> <dl> <dt>Autor:</dt>\
-<dd>Vladimír Pribylinec</dd> </dl>                                           \
+Texts['TFM'][0]['de']="<h1>Regeln des Wï¿½rfel Schach</h1> <dl> <dt>Autor:</dt>\
+<dd>Vladimï¿½r Pribylinec</dd> </dl>                                           \
 <p>\
-Die traditionellen Männer sind erstatten durch die Würfel, die auf der jeden Seite selbstständig den König, die Dame, den Bauer, den Läufer, den Springer und den Turm angezeigt werden. Die aktuell Qualität des Würfel bestimmt das Symbol auf der Oberfläche.\
+Die traditionellen Mï¿½nner sind erstatten durch die Wï¿½rfel, die auf der jeden Seite selbststï¿½ndig den Kï¿½nig, die Dame, den Bauer, den Lï¿½ufer, den Springer und den Turm angezeigt werden. Die aktuell Qualitï¿½t des Wï¿½rfel bestimmt das Symbol auf der Oberflï¿½che.\
 Die Grendregeln sind dieselben wie in dem Orthochess.\
-Eliminiert sind die Förderung des Bauer, der den letzten Rank erraicht <!--und die Ethnahme nebenbei (e.p.).-->\
-Die gefangengenommenen Männer (nicht Bauern) werden in einen 'Stack' nahe bei dem Brett gesetzt.\
-Ein Spieler auf Umdrehung kann entweder mit einer Würfel (dessen Bild verschieben obenauf angezeigt wird) ziehen oder nach ihn Rotation den beliebigen Bauer auf dem Brett ändern auf eine übgrigen Figur mit gleichen Art als die konträre farbige Figur in dem Stack. Dieser Würfel wird sofort aus dem Stack entfernt.\
+Eliminiert sind die Fï¿½rderung des Bauer, der den letzten Rank erraicht <!--und die Ethnahme nebenbei (e.p.).-->\
+Die gefangengenommenen Mï¿½nner (nicht Bauern) werden in einen 'Stack' nahe bei dem Brett gesetzt.\
+Ein Spieler auf Umdrehung kann entweder mit einer Wï¿½rfel (dessen Bild verschieben obenauf angezeigt wird) ziehen oder nach ihn Rotation den beliebigen Bauer auf dem Brett ï¿½ndern auf eine ï¿½bgrigen Figur mit gleichen Art als die kontrï¿½re farbige Figur in dem Stack. Dieser Wï¿½rfel wird sofort aus dem Stack entfernt.\
 </p>\
 <hr/>\
 <p> Die Regeln waren in dem Artikel <i>Cubic\
@@ -176,22 +182,22 @@ Variants Society, Siete 59</i> publiziert. </p>";
 //---------------------------------------------------------------------------
 Texts['TFM'][1]=new Array();//EC
 //---------------------------------------------------------------------------
-Texts['TFM'][1]['cz']="<h1>ExcelChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][1]['cz']="<h1>ExcelChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>\
 <p>\
-Základní pravidla jsou stejná jako v klasickıch šachách.<br>\
-Zrušena je promìna pìšce, kterı dosáhl poslední øady šachovnice a braní mimochodem (e.p.).</p>\
-<p>Poslední dvì øady šachovnice (7. a 8. pro bílého, 1. a 2. pro èerného) jsou zonou promìny.<br>\
-Po vstupu do této zony se všechny kameny mìní  na dámu. Po opuštìní zony promìny se hodnota figury nemìní.\
+Zï¿½kladnï¿½ pravidla jsou stejnï¿½ jako v klasickï¿½ch ï¿½achï¿½ch.<br>\
+Zruï¿½ena je promï¿½na pï¿½ce, kterï¿½ dosï¿½hl poslednï¿½ ï¿½ady ï¿½achovnice a branï¿½ mimochodem (e.p.).</p>\
+<p>Poslednï¿½ dvï¿½ ï¿½ady ï¿½achovnice (7. a 8. pro bï¿½lï¿½ho, 1. a 2. pro ï¿½ernï¿½ho) jsou zonou promï¿½ny.<br>\
+Po vstupu do tï¿½to zony se vï¿½echny kameny mï¿½nï¿½  na dï¿½mu. Po opuï¿½tï¿½nï¿½ zony promï¿½ny se hodnota figury nemï¿½nï¿½.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][1]['sk']="<h1>ExcelChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír\
+Texts['TFM'][1]['sk']="<h1>ExcelChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r\
 Pribylinec</dd> </dl>\
-<p>Základné pravidlá sú rovnaké ako v klasickom šachu.<br>\
-Zrušená je premena pešiaka, ktorı dosiahol poslednı rad šachovnice a branie mimochodom (e. p.).</p>\
-<p>Posledné dva rady šachovnice (7. a 8. pre bieleho, 1. a 2. pre èierneho) sú zónou premeny.<br>\
-Po vstupu do tejto zóny sa všetky kamene menia na dámu. Po opustení zóny premeny sa\
-hodnota figúry nemení.</p>";
+<p>Zï¿½kladnï¿½ pravidlï¿½ sï¿½ rovnakï¿½ ako v klasickom ï¿½achu.<br>\
+Zruï¿½enï¿½ je premena peï¿½iaka, ktorï¿½ dosiahol poslednï¿½ rad ï¿½achovnice a branie mimochodom (e. p.).</p>\
+<p>Poslednï¿½ dva rady ï¿½achovnice (7. a 8. pre bieleho, 1. a 2. pre ï¿½ierneho) sï¿½ zï¿½nou premeny.<br>\
+Po vstupu do tejto zï¿½ny sa vï¿½etky kamene menia na dï¿½mu. Po opustenï¿½ zï¿½ny premeny sa\
+hodnota figï¿½ry nemenï¿½.</p>";
 //---------------------------------------------------------------------------
 Texts['TFM'][1]['en']="<h1>ExcelChess</h1> <dl> <dt>Author:</dt> <dd>Vladimir Pribylinec</dd> </dl>\
 <p>\
@@ -214,22 +220,22 @@ Alle Maseinheiten, die zur Zone hereinkommen, andern zu einer Dame. Nachdem er d
 //---------------------------------------------------------------------------
 Texts['TFM'][2]=new Array();//PC
 //---------------------------------------------------------------------------
-Texts['TFM'][2]['cz']="<h1>PassionChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][2]['cz']="<h1>PassionChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\
-Základní pravidla jsou stejná jako v klasickıch šachách.  Zrušeno je braní mimochodem (e.p.).\
-Pìšec se pohybuje jako v orthochess a má extenzi pøeskoku sousedního pole  smìrem napøed\
-z libovolného  pole šachovnice. Pøeskoèené pole mùe bıt volné anebo obsazeno\
-libovolnım kamenem - kromì pìšce .Následujúcí pole musí bıt volné.\
+Zï¿½kladnï¿½ pravidla jsou stejnï¿½ jako v klasickï¿½ch ï¿½achï¿½ch.  Zruï¿½eno je branï¿½ mimochodem (e.p.).\
+Pï¿½ec se pohybuje jako v orthochess a mï¿½ extenzi pï¿½eskoku sousednï¿½ho pole  smï¿½rem napï¿½ed\
+z libovolnï¿½ho  pole ï¿½achovnice. Pï¿½eskoï¿½enï¿½ pole mï¿½ï¿½e bï¿½t volnï¿½ anebo obsazeno\
+libovolnï¿½m kamenem - kromï¿½ pï¿½ce .Nï¿½sledujï¿½cï¿½ pole musï¿½ bï¿½t volnï¿½.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][2]['sk']="<h1>PassionChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][2]['sk']="<h1>PassionChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>\
 <p>\
-Základné pravidlá sú rovnaké ako v klasickom šachu. Zrušené je branie mimochodom (e.p).\
-Pešiak sa pohybuje ako v orthochess a má extenziu prekoku susedného po¾a smerom dopredu\
-z ¾ubovo¾ného po¾a šachovnice. Preskoèené pole môe by vo¾né alebo obsadené\
-¾ubovo¾nıch kameòom - okrem pešiaka. Nasledujúce pole musí by vo¾né. <br>\
+Zï¿½kladnï¿½ pravidlï¿½ sï¿½ rovnakï¿½ ako v klasickom ï¿½achu. Zruï¿½enï¿½ je branie mimochodom (e.p).\
+Peï¿½iak sa pohybuje ako v orthochess a mï¿½ extenziu prekoku susednï¿½ho poï¿½a smerom dopredu\
+z ï¿½ubovoï¿½nï¿½ho poï¿½a ï¿½achovnice. Preskoï¿½enï¿½ pole mï¿½ï¿½e byï¿½ voï¿½nï¿½ alebo obsadenï¿½\
+ï¿½ubovoï¿½nï¿½ch kameï¿½om - okrem peï¿½iaka. Nasledujï¿½ce pole musï¿½ byï¿½ voï¿½nï¿½. <br>\
 </p>";
 //---------------------------------------------------------------------------
 Texts['TFM'][2]['en']="<h1>PassionChess</h1> <dl> <dt>Author:</dt> <dd>Vladimir Pribylinec</dd> </dl>\
@@ -245,29 +251,29 @@ Texts['TFM'][2]['de']="<h1>PassionChess</h1>  \
 <dl>\
 	<dt>Author:\
 	</dt>\
-	<dd>Vladimír Pribylinec\
+	<dd>Vladimï¿½r Pribylinec\
 	</dd>\
 </dl>\
 <p>Die grundlegenden Regeln sind die selben wie in dem klasischen Schach. E.p.Sicherung ist erreicht.\
-Der Bauer geht genauso in dem Orthochess and er hat die Extension mit dem Übersprung des Nachbarfeld\
+Der Bauer geht genauso in dem Orthochess and er hat die Extension mit dem ï¿½bersprung des Nachbarfeld\
 nach vorn aus der liebligen Feld des Schachbrett. Das gesprungen Feld kann frei oder besetz mit dem\
-beliebigen Stein sein außer Baure.Das nächste Feld muss frei sein.<BR>\
+beliebigen Stein sein auï¿½er Baure.Das nï¿½chste Feld muss frei sein.<BR>\
 </p>";
 //---------------------------------------------------------------------------
 Texts['TFM'][3]=new Array();//HC
-Texts['TFM'][3]['cz']="<h1>HoleChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][3]['cz']="<h1>HoleChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\
-Místo klasickıch figur jsou pouity kostky, které mají na kadé stranì samostatnì symbol krále, dámy, vìe, støelce, jezdce a pìšce. Aktuální hodnotu kostky urèuje symbol na její vrchníploše. Základní pravidla jsou stejná jako v klasickıch šachách. Zrušena je promìna pìšce, kterı dosáhl poslední øady šachovnice a braní mimochodem (e.p.). Kostky odstranìné ze šachovnice  se bez otáèení odkládají do zásobníku vedle šachovnice. Hráè, kterı je na tahu, mue buï táhnout kostkou podle symbolu na její vrchní ploše aneboprovést vımìnu libovolné své figury na šachovnici za libovolnou figuru opaèné barvy v zásobníku. Zamezena je promìna ohroené figury na pìšce. Tato virtuální zámìna se uskuteèní otoèením obou kostek podle symboluna vrchní ploše, pøièem obì zùstanou na pùvodním místì.\
+Mï¿½sto klasickï¿½ch figur jsou pouï¿½ity kostky, kterï¿½ majï¿½ na kaï¿½dï¿½ stranï¿½ samostatnï¿½ symbol krï¿½le, dï¿½my, vï¿½e, stï¿½elce, jezdce a pï¿½ce. Aktuï¿½lnï¿½ hodnotu kostky urï¿½uje symbol na jejï¿½ vrchnï¿½ploï¿½e. Zï¿½kladnï¿½ pravidla jsou stejnï¿½ jako v klasickï¿½ch ï¿½achï¿½ch. Zruï¿½ena je promï¿½na pï¿½ce, kterï¿½ dosï¿½hl poslednï¿½ ï¿½ady ï¿½achovnice a branï¿½ mimochodem (e.p.). Kostky odstranï¿½nï¿½ ze ï¿½achovnice  se bez otï¿½ï¿½enï¿½ odklï¿½dajï¿½ do zï¿½sobnï¿½ku vedle ï¿½achovnice. Hrï¿½ï¿½, kterï¿½ je na tahu, muï¿½e buï¿½ tï¿½hnout kostkou podle symbolu na jejï¿½ vrchnï¿½ ploï¿½e aneboprovï¿½st vï¿½mï¿½nu libovolnï¿½ svï¿½ figury na ï¿½achovnici za libovolnou figuru opaï¿½nï¿½ barvy v zï¿½sobnï¿½ku. Zamezena je promï¿½na ohroï¿½enï¿½ figury na pï¿½ce. Tato virtuï¿½lnï¿½ zï¿½mï¿½na se uskuteï¿½nï¿½ otoï¿½enï¿½m obou kostek podle symboluna vrchnï¿½ ploï¿½e, pï¿½iï¿½em obï¿½ zï¿½stanou na pï¿½vodnï¿½m mï¿½stï¿½.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][3]['sk']="<h1>HoleChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][3]['sk']="<h1>HoleChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\
-Namiesto klasickıch figúr sú pouité kocky, ktoré majú na kadej strane samostatne symbol krá¾a, dámy, vee, strelca, jazdca a pešiaka. Aktuálnu hodnotu kocky urèuje symbol na jej vrchnej ploche. Základné pravidlá sú rovnaké ako v klasickom šachu. Zrušená je premena pešiaka, ktorı dosiahol poslednı rad šachovnice a branie mimochodom (e.p.). Kocky odstránené zo šachovnice  sa bez otáèania odkladajú do zásobníka ved¾a šachovnice. Hráè, ktorı je na ahu, môe buï aha kockou pod¾a symbolu na jej vrchnej ploche alebo previes vımenu ¾ubovo¾nej svojej figúry na šachovnici za ¾ubovo¾nú figúru opaènej farby v zásobníku. Zamedzená je premena ohrozenej figúry na pešiaka. Táto virtuálna zámena sa uskutoèní otoèením obidvoch kociek pod¾a symbola na vrchnej ploche.\
+Namiesto klasickï¿½ch figï¿½r sï¿½ pouï¿½itï¿½ kocky, ktorï¿½ majï¿½ na kaï¿½dej strane samostatne symbol krï¿½a, dï¿½my, veï¿½e, strelca, jazdca a peï¿½iaka. Aktuï¿½lnu hodnotu kocky urï¿½uje symbol na jej vrchnej ploche. Zï¿½kladnï¿½ pravidlï¿½ sï¿½ rovnakï¿½ ako v klasickom ï¿½achu. Zruï¿½enï¿½ je premena peï¿½iaka, ktorï¿½ dosiahol poslednï¿½ rad ï¿½achovnice a branie mimochodom (e.p.). Kocky odstrï¿½nenï¿½ zo ï¿½achovnice  sa bez otï¿½ï¿½ania odkladajï¿½ do zï¿½sobnï¿½ka vedï¿½a ï¿½achovnice. Hrï¿½ï¿½, ktorï¿½ je na ï¿½ahu, mï¿½ï¿½e buï¿½ ï¿½ahaï¿½ kockou podï¿½a symbolu na jej vrchnej ploche alebo previesï¿½ vï¿½menu ï¿½ubovoï¿½nej svojej figï¿½ry na ï¿½achovnici za ï¿½ubovoï¿½nï¿½ figï¿½ru opaï¿½nej farby v zï¿½sobnï¿½ku. Zamedzenï¿½ je premena ohrozenej figï¿½ry na peï¿½iaka. Tï¿½to virtuï¿½lna zï¿½mena sa uskutoï¿½nï¿½ otoï¿½enï¿½m obidvoch kociek podï¿½a symbola na vrchnej ploche.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][3]['en']="<h1>HoleChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Texts['TFM'][3]['en']="<h1>HoleChess</h1> <dl> <dt>Author:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\
 The traditional men are substitued by the cubes, \
@@ -283,121 +289,121 @@ This virtual change is made by a rotation of both cubes dependently to a symbol 
 the upper side. \
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][3]['de']="<h1>HoleChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Texts['TFM'][3]['de']="<h1>HoleChess</h1> <dl> <dt>Author:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\
-Die traditionellen Männer sind erstatten durch die Würfel, die auf der jeden Seite \
- selbstständig den König, die     Dame, den Bauer, den Läufer, den Springer und den \
- Turm angezeigt werden. Die aktuell Qualität   des Würfel bestimmt das Symbol auf \
- der Oberfläche. Die Grendregeln sind dieselben wie in dem Orthochess. Eliminiert \
- sind die Förderung des Bauer, der den letzten Rank erraicht und die Ethnahme \
- nebenbei   (e.p.). Die gefangengenommenen Männer werden in einen 'Stack' nahe \
- bei dem Brett gesetzt. Ein Spieler auf Umdrehung kann entweder mit einer Würfel \
+Die traditionellen Mï¿½nner sind erstatten durch die Wï¿½rfel, die auf der jeden Seite \
+ selbststï¿½ndig den Kï¿½nig, die     Dame, den Bauer, den Lï¿½ufer, den Springer und den \
+ Turm angezeigt werden. Die aktuell Qualitï¿½t   des Wï¿½rfel bestimmt das Symbol auf \
+ der Oberflï¿½che. Die Grendregeln sind dieselben wie in dem Orthochess. Eliminiert \
+ sind die Fï¿½rderung des Bauer, der den letzten Rank erraicht und die Ethnahme \
+ nebenbei   (e.p.). Die gefangengenommenen Mï¿½nner werden in einen 'Stack' nahe \
+ bei dem Brett gesetzt. Ein Spieler auf Umdrehung kann entweder mit einer Wï¿½rfel \
  (dessen Bild verschieben obenauf angezeigt wird) ziehen oder nach ihn Rotation den \
- beliebigen Figure auf dem Brett und den beliebigen Figure mit die konträre farbige \
+ beliebigen Figure auf dem Brett und den beliebigen Figure mit die kontrï¿½re farbige \
  Figure in dem Stack nad die Symbole auf der obere Seite. Es ist verboten die bedroh \
  ten Figure nach der Bauer wechseln. Dieser virtuell Wechsel realisiert sich nach \
- die Rotation der beiden Würfeln vorbai des Symbol auf der Oberfläche und die \
- Würfeln auf dem selba Feld bleiben. \
+ die Rotation der beiden Wï¿½rfeln vorbai des Symbol auf der Oberflï¿½che und die \
+ Wï¿½rfeln auf dem selba Feld bleiben. \
 </p>";
 //---------------------------------------------------------------------------
 Texts['TFM'][4]=new Array();//BC
-Texts['TFM'][4]['cz']="<h1>ButterflyChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][4]['cz']="<h1>ButterflyChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\
-Základní pravidla jsou stejná jako v klasickıch šachách. Zrušeno je braní mimochodem (e.p.). Dáma, vì a strelec mají kromì své obvyklé pohyblivosti navíc extenzi ve formì pøeskoku kamene libovolné barvy, kterı jim jako první bráni v pohybu ve zvoleném smìru. Extenze umoòuje figuøe postavit se na následující pole za pøeskoèenım kamenem - jestli je obsazeno soupeøícím kamenem, vylouèí se z hry. Pøeskoèenı kámen zùstává ve høe. Kameny stojící na 2. a 7. øadì nelze pøekoèit figurou s extenzí smìrem vpøed.\
+Zï¿½kladnï¿½ pravidla jsou stejnï¿½ jako v klasickï¿½ch ï¿½achï¿½ch. Zruï¿½eno je branï¿½ mimochodem (e.p.). Dï¿½ma, vï¿½ a strelec majï¿½ kromï¿½ svï¿½ obvyklï¿½ pohyblivosti navï¿½c extenzi ve formï¿½ pï¿½eskoku kamene libovolnï¿½ barvy, kterï¿½ jim jako prvnï¿½ brï¿½ni v pohybu ve zvolenï¿½m smï¿½ru. Extenze umoï¿½ï¿½uje figuï¿½e postavit se na nï¿½sledujï¿½cï¿½ pole za pï¿½eskoï¿½enï¿½m kamenem - jestli je obsazeno soupeï¿½ï¿½cï¿½m kamenem, vylouï¿½ï¿½ se z hry. Pï¿½eskoï¿½enï¿½ kï¿½men zï¿½stï¿½vï¿½ ve hï¿½e. Kameny stojï¿½cï¿½ na 2. a 7. ï¿½adï¿½ nelze pï¿½ekoï¿½it figurou s extenzï¿½ smï¿½rem vpï¿½ed.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][4]['sk']="<h1>ButterflyChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][4]['sk']="<h1>ButterflyChess</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
-<p>\Základné pravidlá sú rovnaké ako v klasickom šachu. Zrušené je branie mimochodom (e.p). Dáma, vea a strelec majú okrem svojej obvyklej pohyblivosti navyše extenziu vo forme preskoku kameòa ¾ubovo¾nej farby, ktorı im ako prvı bráni v pohybe vo zvolenom smere. Extenzia umoòuje figúre postavi sa na nasledujúce pole za preskoèenı kameò - ak je  obsadené súperiacim kameòom, tento sa vylúèi z hry. Preskoèenı kameò zostáva v hre. Kamene stojace na 2. a 7. rade nemono preskoèi figúrou s extenziou smerom dopredu.\
+<p>\Zï¿½kladnï¿½ pravidlï¿½ sï¿½ rovnakï¿½ ako v klasickom ï¿½achu. Zruï¿½enï¿½ je branie mimochodom (e.p). Dï¿½ma, veï¿½a a strelec majï¿½ okrem svojej obvyklej pohyblivosti navyï¿½e extenziu vo forme preskoku kameï¿½a ï¿½ubovoï¿½nej farby, ktorï¿½ im ako prvï¿½ brï¿½ni v pohybe vo zvolenom smere. Extenzia umoï¿½ï¿½uje figï¿½re postaviï¿½ sa na nasledujï¿½ce pole za preskoï¿½enï¿½ kameï¿½ - ak je  obsadenï¿½ sï¿½periacim kameï¿½om, tento sa vylï¿½ï¿½i z hry. Preskoï¿½enï¿½ kameï¿½ zostï¿½va v hre. Kamene stojace na 2. a 7. rade nemoï¿½no preskoï¿½iï¿½ figï¿½rou s extenziou smerom dopredu.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][4]['de']="<h1>ButterflyChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Texts['TFM'][4]['de']="<h1>ButterflyChess</h1> <dl> <dt>Author:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
-<p>\Die grundlegenden Regeln sind die selben wie in dem klasischen Schach. E.p.Sicherung ist erreicht. Queen, Turm und Läufer haben mit Ausnahme seiner Bewegung neben einer Erweiterung keine farbigen Menschen, die als erste die Blockade einer Bewegung in der gewählt wird springen Richtung. Die Erweiterung ermöglicht für Einheit auf den nächsten Platz hinter stehen ein Mann sprang - wenn sie von feindlichen Einheit besetzt ist, ist es von einem Spiel eliminiert. Die Männer, die auf 2. und 7. Reihen stehen, dürfen nicht nach vorn Richtung mit dem Extension gesprungen.\
+<p>\Die grundlegenden Regeln sind die selben wie in dem klasischen Schach. E.p.Sicherung ist erreicht. Queen, Turm und Lï¿½ufer haben mit Ausnahme seiner Bewegung neben einer Erweiterung keine farbigen Menschen, die als erste die Blockade einer Bewegung in der gewï¿½hlt wird springen Richtung. Die Erweiterung ermï¿½glicht fï¿½r Einheit auf den nï¿½chsten Platz hinter stehen ein Mann sprang - wenn sie von feindlichen Einheit besetzt ist, ist es von einem Spiel eliminiert. Die Mï¿½nner, die auf 2. und 7. Reihen stehen, dï¿½rfen nicht nach vorn Richtung mit dem Extension gesprungen.\
 </p>";
 //---------------------------------------------------------------------------
-Texts['TFM'][4]['en']="<h1>ButterflyChess</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Texts['TFM'][4]['en']="<h1>ButterflyChess</h1> <dl> <dt>Author:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
 <p>\The basic rules are the same as in the orthochess. Eliminated is e.p.capture. Queen, Rook and Bishop have except his movement in addition an extension to jump any colored man, that is as first blocking a movement in the selected direction. The extension enables for unit to stand on the next square behind a jumped man - if is occupied by enemy unit, that is eleminated from a game. The men, that are standing on 2. and 7. row must not be jumped by extended unit in direction forward.\
 </p>";
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 Texts['TFM'][7]=new Array();//CS
-Texts['TFM'][7]['cz']="<h1>CubicShogi</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
+Texts['TFM'][7]['cz']="<h1>CubicShogi</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
-<p>\<BR>Místo klasickıch figur jsou pouity kostky, které mají na kadé stranì samostatnì symbol krále, dámy, vìe, støelce, jezdce a pìšce. Aktuální hodnotu kostky urèuje symbol na její vrchní ploše. Hraje se na desce s 8x8 polemi. Poslední tøi øady pøedstavují zónu povıšení. <BR>\
+<p>\<BR>Mï¿½sto klasickï¿½ch figur jsou pouï¿½ity kostky, kterï¿½ majï¿½ na kaï¿½dï¿½ stranï¿½ samostatnï¿½ symbol krï¿½le, dï¿½my, vï¿½e, stï¿½elce, jezdce a pï¿½ce. Aktuï¿½lnï¿½ hodnotu kostky urï¿½uje symbol na jejï¿½ vrchnï¿½ ploï¿½e. Hraje se na desce s 8x8 polemi. Poslednï¿½ tï¿½i ï¿½ady pï¿½edstavujï¿½ zï¿½nu povï¿½ï¿½enï¿½. <BR>\
 <BR>\
-Základní postavení: <BR>\
-Bílı Kd1 Gc1 Ge1 Vg2 Sb2 Sf1 Jb1 Jg1, pìšci na celé 3. øadì <BR>\
-Eernı: Ke8 Gd8 Gf8 Vb7 Sc8 Sg7 Jb8 Jg8, pišci na celé 6. øadì <BR>\
+Zï¿½kladnï¿½ postavenï¿½: <BR>\
+Bï¿½lï¿½ Kd1 Gc1 Ge1 Vg2 Sb2 Sf1 Jb1 Jg1, pï¿½ci na celï¿½ 3. ï¿½adï¿½ <BR>\
+Eernï¿½: Ke8 Gd8 Gf8 Vb7 Sc8 Sg7 Jb8 Jg8, piï¿½ci na celï¿½ 6. ï¿½adï¿½ <BR>\
 <BR>\
 Pohyblivost figur: <BR>\
 <ul>\
-<li>Král       >  o jedno pole kadım smìrem,</li>\
-<li>Generál  >  jako král kromì pohybu šikmo dozadu.</li>\
-<li>Vì       >  po sloupcích a øadách,</li>\
-<li>Støelec  >  po diagonálach,</li>\
-<li>Jezdec   >  dopøedu o dva pole na sousedící sloupec - mùe pøeskoèit i jiné figury, navíc se pohybuje horizontálnì o jedno pole,</li>\
-<li>Pìšec     >  o jedno pole pøímo dopøedu a stejnì i bere.</li>\
+<li>Krï¿½l       >  o jedno pole kaï¿½dï¿½m smï¿½rem,</li>\
+<li>Generï¿½l  >  jako krï¿½l kromï¿½ pohybu ï¿½ikmo dozadu.</li>\
+<li>Vï¿½       >  po sloupcï¿½ch a ï¿½adï¿½ch,</li>\
+<li>Stï¿½elec  >  po diagonï¿½lach,</li>\
+<li>Jezdec   >  dopï¿½edu o dva pole na sousedï¿½cï¿½ sloupec - mï¿½ï¿½e pï¿½eskoï¿½it i jinï¿½ figury, navï¿½c se pohybuje horizontï¿½lnï¿½ o jedno pole,</li>\
+<li>Pï¿½ec     >  o jedno pole pï¿½ï¿½mo dopï¿½edu a stejnï¿½ i bere.</li>\
 </ul><BR>\
-Vylouèené kameny se ukládají do zásobníku, ve kterém jsou na zaèátku hry dva bílí a dva èerní pìšci. Pìšec a jezdec se po vstupu do zóny povıšení okamitì mìní na generále otoèením kostky. Po doloení ze zásobníku k povıšení u nich nedochází. Vì má v zónì extenzi pohybu o 1 pole diagonálnì ,bez ohledu na zpùsob, jak se v ní ocitla. Støelec má v zónì extenzi pohybu o 1 pole frontálnì, bez ohledu na zpùsob, jak se v ní ocitl. Po tahu ven ze zóny vì i støelec ztrácí extenzi a pohybují se jako na zaèátku hry.<BR>\
+Vylouï¿½enï¿½ kameny se uklï¿½dajï¿½ do zï¿½sobnï¿½ku, ve kterï¿½m jsou na zaï¿½ï¿½tku hry dva bï¿½lï¿½ a dva ï¿½ernï¿½ pï¿½ci. Pï¿½ec a jezdec se po vstupu do zï¿½ny povï¿½ï¿½enï¿½ okamï¿½itï¿½ mï¿½nï¿½ na generï¿½le otoï¿½enï¿½m kostky. Po doloï¿½enï¿½ ze zï¿½sobnï¿½ku k povï¿½ï¿½enï¿½ u nich nedochï¿½zï¿½. Vï¿½ mï¿½ v zï¿½nï¿½ extenzi pohybu o 1 pole diagonï¿½lnï¿½ ,bez ohledu na zpï¿½sob, jak se v nï¿½ ocitla. Stï¿½elec mï¿½ v zï¿½nï¿½ extenzi pohybu o 1 pole frontï¿½lnï¿½, bez ohledu na zpï¿½sob, jak se v nï¿½ ocitl. Po tahu ven ze zï¿½ny vï¿½ i stï¿½elec ztrï¿½cï¿½ extenzi a pohybujï¿½ se jako na zaï¿½ï¿½tku hry.<BR>\
 <BR>\
-Figura odebrána ze šachovnice si pøed uloením do zásobníku vymìní symbol na horní ploše kostky s pìšcem opaèné barvy v zásobníku. Kdy se v zásobníku pìšec pro zámìnu nenachází, figura je vylouèena z hry.<BR>\
-U pìšcù opaèné barvy nemùe dojít k zámìne symbolu, proto pìšec odobranı ze šachovnice je vylouèen z hry.<BR>\
+Figura odebrï¿½na ze ï¿½achovnice si pï¿½ed uloï¿½enï¿½m do zï¿½sobnï¿½ku vymï¿½nï¿½ symbol na hornï¿½ ploï¿½e kostky s pï¿½cem opaï¿½nï¿½ barvy v zï¿½sobnï¿½ku. Kdyï¿½ se v zï¿½sobnï¿½ku pï¿½ec pro zï¿½mï¿½nu nenachï¿½zï¿½, figura je vylouï¿½ena z hry.<BR>\
+U pï¿½cï¿½ opaï¿½nï¿½ barvy nemï¿½ï¿½e dojï¿½t k zï¿½mï¿½ne symbolu, proto pï¿½ec odobranï¿½ ze ï¿½achovnice je vylouï¿½en z hry.<BR>\
 <BR>\
-Hráè, kterı je na tahu, mùe buï táhnout figurou na desce nebo libovolnou figuru své barvy ze zásobníku doloit na libovolné volné pole na desce, ale pìšec nesmí bıt doloen na sloupec, na kterém se ji nachází pìšec stejné barvy. Pro šach, mat a remízu platí stejné podmínky jako v klasickıch šachách. Vyhrává hráè, kterı dá mat soupeøi.<BR>\
+Hrï¿½ï¿½, kterï¿½ je na tahu, mï¿½ï¿½e buï¿½ tï¿½hnout figurou na desce nebo libovolnou figuru svï¿½ barvy ze zï¿½sobnï¿½ku doloï¿½it na libovolnï¿½ volnï¿½ pole na desce, ale pï¿½ec nesmï¿½ bï¿½t doloï¿½en na sloupec, na kterï¿½m se jiï¿½ nachï¿½zï¿½ pï¿½ec stejnï¿½ barvy. Pro ï¿½ach, mat a remï¿½zu platï¿½ stejnï¿½ podmï¿½nky jako v klasickï¿½ch ï¿½achï¿½ch. Vyhrï¿½vï¿½ hrï¿½ï¿½, kterï¿½ dï¿½ mat soupeï¿½i.<BR>\
 <BR>\
 </P>";
 //---------------------------------------------------------------------------
-Texts['TFM'][7]['sk']="<h1>CubicShogi</h1> <dl> <dt>Autor:</dt> <dd>Vladimír \
-Pribylinec</dd> </dl>                                                           \Namiesto klasickıch figúr sú pouité kocky, ktoré majú na kadej strane samostatne symbol krá¾a, dámy, vìe, støelca, jazdca a pešiaka. Aktuálnu hodnotu kocky urèuje symbol na jej vrchnej ploche. Hrá sa na doske s 8x8 po¾ami. Posledné tri rady predstavujú zónu povıšenia. <BR>\
+Texts['TFM'][7]['sk']="<h1>CubicShogi</h1> <dl> <dt>Autor:</dt> <dd>Vladimï¿½r \
+Pribylinec</dd> </dl>                                                           \Namiesto klasickï¿½ch figï¿½r sï¿½ pouï¿½itï¿½ kocky, ktorï¿½ majï¿½ na kaï¿½dej strane samostatne symbol krï¿½a, dï¿½my, vï¿½e, stï¿½elca, jazdca a peï¿½iaka. Aktuï¿½lnu hodnotu kocky urï¿½uje symbol na jej vrchnej ploche. Hrï¿½ sa na doske s 8x8 poï¿½ami. Poslednï¿½ tri rady predstavujï¿½ zï¿½nu povï¿½ï¿½enia. <BR>\
 <BR>\
-Základné postavenie: <BR>\
-Bílı       Kd1 Gc1 Ge1 Vg2 Sb2 Sf1 Jb1 Jg1, pešiaci na celom 3. rade <BR>\
-Èierny:  Ke8 Gd8 Gf8 Vb7 Sc8 Sg7 Jb8 Jg8, pešiaci na celom 6. rade <BR>\
+Zï¿½kladnï¿½ postavenie: <BR>\
+Bï¿½lï¿½       Kd1 Gc1 Ge1 Vg2 Sb2 Sf1 Jb1 Jg1, peï¿½iaci na celom 3. rade <BR>\
+ï¿½ierny:  Ke8 Gd8 Gf8 Vb7 Sc8 Sg7 Jb8 Jg8, peï¿½iaci na celom 6. rade <BR>\
 <BR>\
 Pohyblivost figur: <BR>\
 <ul>\
-<li>Krá¾       >  o jedno pole kadım smerom,</li>\
-<li>Generál  >  ako krá¾, okrom pohybu šikmo dozadu.</li>\
-<li>Vì       >  po slåpcoch a radoch,</li>\
-<li>Støelec  >  po diagonálach,</li>\
-<li>Jazdec   >  dopredu o dva polia na susediaci ståpec - môe preskoèi aj iné figúry, naviac sa pohybuje horizontálne o jedno pole,</li>\
-<li>Pešiak    >  o jedno pole priamo dopredu a rovnako aj berie.</li>\
+<li>Krï¿½       >  o jedno pole kaï¿½dï¿½m smerom,</li>\
+<li>Generï¿½l  >  ako krï¿½, okrom pohybu ï¿½ikmo dozadu.</li>\
+<li>Vï¿½       >  po slï¿½pcoch a radoch,</li>\
+<li>Stï¿½elec  >  po diagonï¿½lach,</li>\
+<li>Jazdec   >  dopredu o dva polia na susediaci stï¿½pec - mï¿½ï¿½e preskoï¿½iï¿½ aj inï¿½ figï¿½ry, naviac sa pohybuje horizontï¿½lne o jedno pole,</li>\
+<li>Peï¿½iak    >  o jedno pole priamo dopredu a rovnako aj berie.</li>\
 </ul><BR>\
-Vylouèené kameny se ukládají do zásobníku, ve kterém jsou na zaèátku hry dva bílí a dva èerní pìšci. Pìšec a jezdec se po vstupu do zóny povıšení okamitì mìní na generále otoèením kostky. <BR>\
-Po doloení ze zásobníku k povıšení u nich nedochází. Vì má v zónì extenzi pohybu o 1 pole diagonálnì, bez ohledu na zpùsob, jak se v ní ocitla. Støelec má v zónì extenzi pohybu o 1 pole frontálnì, bez ohledu na zpùsob, jak se v ní ocitl. Po tahu ven ze zóny vì i støelec ztrácí extenzi a pohybují se jako na zaèátku hry. <BR>\
-Figura odebrána ze šachovnice si pøed uloením do zásobníku vymìní symbol na horní ploše kostky s pìšcem opaèné barvy v zásobníku. Kdy se v zásobníku pìšec pro zámìnu nenachází, figura je vylouèena z hry. U pìšcù opaèné barvy nemùe dojít k zámìne symbolu, proto pìšec odobranı ze šachovnice je vylouèen z hry. <BR>\
-Hráè, kterı je na tahu, mùe buï táhnout figurou na desce nebo libovolnou figuru své barvy ze zásobníku doloit na libovolné volné pole na desce, ale pìšec nesmí bıt doloen na sloupec, na kterém se ji nachází pìšec stejné barvy. Pro šach, mat a remízu platí stejné podmínky jako v klasickıch šachách. Vyhrává hráè, kterı dá mat soupeøi.<BR>\
+Vylouï¿½enï¿½ kameny se uklï¿½dajï¿½ do zï¿½sobnï¿½ku, ve kterï¿½m jsou na zaï¿½ï¿½tku hry dva bï¿½lï¿½ a dva ï¿½ernï¿½ pï¿½ci. Pï¿½ec a jezdec se po vstupu do zï¿½ny povï¿½ï¿½enï¿½ okamï¿½itï¿½ mï¿½nï¿½ na generï¿½le otoï¿½enï¿½m kostky. <BR>\
+Po doloï¿½enï¿½ ze zï¿½sobnï¿½ku k povï¿½ï¿½enï¿½ u nich nedochï¿½zï¿½. Vï¿½ mï¿½ v zï¿½nï¿½ extenzi pohybu o 1 pole diagonï¿½lnï¿½, bez ohledu na zpï¿½sob, jak se v nï¿½ ocitla. Stï¿½elec mï¿½ v zï¿½nï¿½ extenzi pohybu o 1 pole frontï¿½lnï¿½, bez ohledu na zpï¿½sob, jak se v nï¿½ ocitl. Po tahu ven ze zï¿½ny vï¿½ i stï¿½elec ztrï¿½cï¿½ extenzi a pohybujï¿½ se jako na zaï¿½ï¿½tku hry. <BR>\
+Figura odebrï¿½na ze ï¿½achovnice si pï¿½ed uloï¿½enï¿½m do zï¿½sobnï¿½ku vymï¿½nï¿½ symbol na hornï¿½ ploï¿½e kostky s pï¿½cem opaï¿½nï¿½ barvy v zï¿½sobnï¿½ku. Kdyï¿½ se v zï¿½sobnï¿½ku pï¿½ec pro zï¿½mï¿½nu nenachï¿½zï¿½, figura je vylouï¿½ena z hry. U pï¿½cï¿½ opaï¿½nï¿½ barvy nemï¿½ï¿½e dojï¿½t k zï¿½mï¿½ne symbolu, proto pï¿½ec odobranï¿½ ze ï¿½achovnice je vylouï¿½en z hry. <BR>\
+Hrï¿½ï¿½, kterï¿½ je na tahu, mï¿½ï¿½e buï¿½ tï¿½hnout figurou na desce nebo libovolnou figuru svï¿½ barvy ze zï¿½sobnï¿½ku doloï¿½it na libovolnï¿½ volnï¿½ pole na desce, ale pï¿½ec nesmï¿½ bï¿½t doloï¿½en na sloupec, na kterï¿½m se jiï¿½ nachï¿½zï¿½ pï¿½ec stejnï¿½ barvy. Pro ï¿½ach, mat a remï¿½zu platï¿½ stejnï¿½ podmï¿½nky jako v klasickï¿½ch ï¿½achï¿½ch. Vyhrï¿½vï¿½ hrï¿½ï¿½, kterï¿½ dï¿½ mat soupeï¿½i.<BR>\
 </P>";
 //---------------------------------------------------------------------------
-Texts['TFM'][7]['de']="<h1>CubicShogi</h1> <dl> <dt>Author:</dt> <dd>Vladimír \
+Texts['TFM'][7]['de']="<h1>CubicShogi</h1> <dl> <dt>Author:</dt> <dd>Vladimï¿½r \
 Pribylinec</dd> </dl>                                                           \
-<p>Anstelle der klassischen Würfel Zahlen sind auf jeder Seite einzeln Symbol König, Dame, Turm, Läufer, Springer und Bauern verwendet. Der aktuelle Wert der Würfel bestimmt das Symbol auf seiner Oberseite. Es wird auf einem Brett von 8x8 Feldern gespielt. Die letzten drei Reihen sind die Förderung Zone.<BR>\
+<p>Anstelle der klassischen Wï¿½rfel Zahlen sind auf jeder Seite einzeln Symbol Kï¿½nig, Dame, Turm, Lï¿½ufer, Springer und Bauern verwendet. Der aktuelle Wert der Wï¿½rfel bestimmt das Symbol auf seiner Oberseite. Es wird auf einem Brett von 8x8 Feldern gespielt. Die letzten drei Reihen sind die Fï¿½rderung Zone.<BR>\
 <BR>\
 Ausgangsposition:<BR>\
-Weiß Kd1 GC1 GE1 VG2 Sb2 SF1 JB1 JG1, Bauern um die dritte Trihe<BR>\
+Weiï¿½ Kd1 GC1 GE1 VG2 Sb2 SF1 JB1 JG1, Bauern um die dritte Trihe<BR>\
 Schwarz: Ke8 GD8 GF8 Vb7 Lc8 Lg7 Sb8 Jg8, Bauern rund um den 6. Reihe<BR>\
 <BR>\
 Mobility Zahlen:<BR>\
 <ul>\
 <li>King      > ein Platz in jede Richtung,</li>\
-<li>General > wie ein König, legte ocker Bewegung zurück.</li>\
+<li>General > wie ein Kï¿½nig, legte ocker Bewegung zurï¿½ck.</li>\
 <li>Turm    > nach Spalten und nach Reilen</li>\
-<li>Läufer   > entlang Diagonalen,</li>\
-<li>Springer> zwei Felder vor angrenzend an die Spalte - können über andere Zahlen springen, zusätzlich zu bewegenden einen quadratischen horizontal,</li>\
+<li>Lï¿½ufer   > entlang Diagonalen,</li>\
+<li>Springer> zwei Felder vor angrenzend an die Spalte - kï¿½nnen ï¿½ber andere Zahlen springen, zusï¿½tzlich zu bewegenden einen quadratischen horizontal,</li>\
 <li>Pawn    > ein Platz direkt vorne sowie zu nehmen.</li>\
 </ul>\
 <BR>\
-Ausgeschlossen Blöcke werden in dem Behälter gespeichert , in dem das Spiel zwei weiße und zwei schwarze Bauern starten. Bauer uns springer Eingang in die Förderung Zone unmittelbar an General rotierenden Würfel verändert. Nach Eingang des Nachweises des Behälter für die Förderung der ihnen nicht. Der Turm ist in der Zone Verlängerung Bewegung von einem Raum diagonal , unabhängig von der Art und Weise sie sprang . Der Läufer ist in der Zone Verlängerung Bewegung von einem Raum frontal, unabhängig von der Art und Weise sie sprang. Schütze in der Zone der Ausfahrbewegung ein Feld nach vorne unabhängig von der Art und Weise in it myself . Nach dem Rückzug aus der Zone der Turm und der Läufer verliert Erweiterung und Umzug als den Beginn des Spiels.<BR>\
-Abbildung aus dem Vorstand , bevor sie in den Stapel Austausch Symbol am Anfang eines Würfels mit Bauer entgegengesetzte Farbe in dem Behälter entfernt . Wenn kein Bauer für Verwirrung ist in dem Behälter, Figur ist aus dem Spiel eliminiert. Die Bauern gegenüber Farben können gemischt Symbol sein, damit die gesammelten Bauer aus dem Vorstand aus dem Spiel ausgeschlossen.<BR>\
+Ausgeschlossen Blï¿½cke werden in dem Behï¿½lter gespeichert , in dem das Spiel zwei weiï¿½e und zwei schwarze Bauern starten. Bauer uns springer Eingang in die Fï¿½rderung Zone unmittelbar an General rotierenden Wï¿½rfel verï¿½ndert. Nach Eingang des Nachweises des Behï¿½lter fï¿½r die Fï¿½rderung der ihnen nicht. Der Turm ist in der Zone Verlï¿½ngerung Bewegung von einem Raum diagonal , unabhï¿½ngig von der Art und Weise sie sprang . Der Lï¿½ufer ist in der Zone Verlï¿½ngerung Bewegung von einem Raum frontal, unabhï¿½ngig von der Art und Weise sie sprang. Schï¿½tze in der Zone der Ausfahrbewegung ein Feld nach vorne unabhï¿½ngig von der Art und Weise in it myself . Nach dem Rï¿½ckzug aus der Zone der Turm und der Lï¿½ufer verliert Erweiterung und Umzug als den Beginn des Spiels.<BR>\
+Abbildung aus dem Vorstand , bevor sie in den Stapel Austausch Symbol am Anfang eines Wï¿½rfels mit Bauer entgegengesetzte Farbe in dem Behï¿½lter entfernt . Wenn kein Bauer fï¿½r Verwirrung ist in dem Behï¿½lter, Figur ist aus dem Spiel eliminiert. Die Bauern gegenï¿½ber Farben kï¿½nnen gemischt Symbol sein, damit die gesammelten Bauer aus dem Vorstand aus dem Spiel ausgeschlossen.<BR>\
 <BR>\
-Der Spieler , der am Zug ist , kann entweder ziehen eine Figur auf dem Brett, oder jede Zahl Ihrer Farbe Dokument aus dem Stapel zu einem leeren Platz auf dem Brett, sondern muss von einem Bauern auf einer Säule , die bereits ein Bauer der gleichen Farbe begleitet werden. Für Schach, Schachmatt zu ziehen und die gleichen Bedingungen wie im klassischen Schach . Der Gewinner ist der Spieler, kann der Gegner schachmatt.<BR>\
+Der Spieler , der am Zug ist , kann entweder ziehen eine Figur auf dem Brett, oder jede Zahl Ihrer Farbe Dokument aus dem Stapel zu einem leeren Platz auf dem Brett, sondern muss von einem Bauern auf einer Sï¿½ule , die bereits ein Bauer der gleichen Farbe begleitet werden. Fï¿½r Schach, Schachmatt zu ziehen und die gleichen Bedingungen wie im klassischen Schach . Der Gewinner ist der Spieler, kann der Gegner schachmatt.<BR>\
 </P>";
 //---------------------------------------------------------------------------
-Texts['TFM'][7]['en']="<h1>CubicShogi</h1> <dl> <dt>Author:</dt> <dd>Vladimír Pribylinec</dd> </dl> <p>Instead of classical figures are used cubes to each side separately symbol of the king, rook, bishop, knight and pawn. Current value of dice determines the symbol on its upper side. The game is played on the board with a 8x8 array. The last three rows represent the promotion zone.<BR><BR> Basic position:<BR> White Kd1 Gc1 Ge1 Rg2 Bb2 Bf1 Nb1 Ng1, pawns on the whole 3th row<BR> Black: Ke8 Gd8 Gf8 Rb7 Bc8 BG7 Nb8 Ng8, pawns on the whole 6th row<BR> <BR>Mobility figures:<BR><ul><li>King       >   one square in any direction. </li> <li>General  >   one square in any direction except diagonally backwards.     </li><li>Rook     >   any squares of the columns and rows.</li><li>Bishop   >   any squares of the diagonals.</li><li>Knight   >   forward two squares to the adjacent column and it has an extension                  to move horizontal for a one square. It ca jump other men. </li><li>Pawn    >   one square forward, it captures the same way it moves.</li></ul><BR>\
+Texts['TFM'][7]['en']="<h1>CubicShogi</h1> <dl> <dt>Author:</dt> <dd>Vladimï¿½r Pribylinec</dd> </dl> <p>Instead of classical figures are used cubes to each side separately symbol of the king, rook, bishop, knight and pawn. Current value of dice determines the symbol on its upper side. The game is played on the board with a 8x8 array. The last three rows represent the promotion zone.<BR><BR> Basic position:<BR> White Kd1 Gc1 Ge1 Rg2 Bb2 Bf1 Nb1 Ng1, pawns on the whole 3th row<BR> Black: Ke8 Gd8 Gf8 Rb7 Bc8 BG7 Nb8 Ng8, pawns on the whole 6th row<BR> <BR>Mobility figures:<BR><ul><li>King       >   one square in any direction. </li> <li>General  >   one square in any direction except diagonally backwards.     </li><li>Rook     >   any squares of the columns and rows.</li><li>Bishop   >   any squares of the diagonals.</li><li>Knight   >   forward two squares to the adjacent column and it has an extension                  to move horizontal for a one square. It ca jump other men. </li><li>Pawn    >   one square forward, it captures the same way it moves.</li></ul><BR>\
 Captured units are stored in the stack, in which to start the game two white and two black pawns. A pawn and the knight, after entering into the promotion zone immediately turns into a general by rotating cube.  After drop from the stack are they not promoted. Rook has is in the zone of the promotion an extension of one square diagonally regardless of the way it jumped. Bishop has in the zone an extension of one square frontally  regardless of the way it jumped . Bishop has in the zone an extension movement of one field forwardlly regardless of the way it jumped. After the move out of the zone rook and bishop lose an extension and move as the beginning of the game.<BR>\
 The unit removed from the board before placing in the stack exchanges symbol on top of a cube with pawn opposite color in the stack. When no pawn is in the stack, a unit is removed from a game. The pawns opposite colors canot be mixed up symbol, so pawn removed from the chessboard is eliminated from the game.<BR>\
 <BR>\
@@ -730,7 +736,7 @@ function EndTurn()
 function TaskCheckEnd()
 {
   //debug
-	/*parent.document.getElementById('InfoMsg').innerHTML="Pøemıšlím "+Board.Index+". tah dopøedu. (prohledáno "+Board.Nodes+" pozic)"+
+	/*parent.document.getElementById('InfoMsg').innerHTML="Pï¿½emï¿½ï¿½lï¿½m "+Board.Index+". tah dopï¿½edu. (prohledï¿½no "+Board.Nodes+" pozic)"+
 	" pozice v zasobniku: "+Board.StackPos+";;;"+Board.DebugInfo+" |; ";
 	for (var j = 0; j < Board.PVLen[0]; ++j)
 	{
@@ -946,8 +952,8 @@ function Lang(NewLng)
 	document.getElementById("UITimeLabel").innerHTML=Texts['UITimeLabel'][lang];
 	document.getElementById("UIIntLabel").innerHTML=Texts['UIIntLabel'][lang];
 
-	document.getElementById("Aut").innerHTML=Texts['Author'][lang]+": Vladimír Pribylinec";
-	document.getElementById("Ja").innerHTML=Texts['Programmer'][lang]+": Martin Holeèek";
+	document.getElementById("Aut").innerHTML=Texts['Author'][lang]+": VladimÃ­r Pribylinec";
+	document.getElementById("Ja").innerHTML=Texts['Programmer'][lang]+": Martin HoleÄek";
 	//++prepsat popisky menu
 }
 function HideLang(NewLng) //pouze pro vnejsi nastaveni
@@ -1047,7 +1053,7 @@ HELP</span>
 <span id="Main" class="BASE"
 style="Z-INDEX: 50; TEXT-ALIGN: center; BACKGROUND-COLOR: blue; WIDTH: 100%; HEIGHT: 100%; VISIBILITY: visible; TOP: 0px; LEFT: 0px">
 <noscript>
-Hra vyaduje prohlíeè kterı má povolenı a podporuje javascript.
+Hra vyï¿½aduje prohlï¿½eï¿½ kterï¿½ mï¿½ povolenï¿½ a podporuje javascript.
 This game needs javascript to be supported and enabled.
 </noscript>
 <img id="CV3" class="BASE" style="left: 0%; top: 0%; width: 100%; height: 100%; z-index: 0; visibility: hidden;" src="HC.jpg">
@@ -1073,9 +1079,9 @@ style="visibility: hidden; left: 40%; top: 30%; background-color: blue; font-siz
 </span>
 
 <font id="Aut" class="BASE" style="left: 10%; top: 20%; z-index: 1;
-color: yellow; font-weight: bold;">Autor: Vladimír Pribylinec</font>
+color: yellow; font-weight: bold;">Autor: VladimÃ­r Pribylinec</font>
 <font id="Ja" class="BASE" style="left: 10%; top: 25%; z-index: 1;
-color: yellow; font-weight: bold;">Naprogramoval: Martin Holeèek</font>
+color: yellow; font-weight: bold;">Based on <a href="http://www.tckerrigan.com/Chess/TSCP/">TSCP</a> programmed by Martin HoleÄek</font>
 
 <img onclick="MenuButton(2)" class="BASE" style="left: 25%; top: 30%; width: 50%; height: 9%; z-index: 1;" src="2pl.png">
 <img onclick="MenuButton(1)" class="BASE" style="left: 25%; top: 40%; width: 50%; height: 9%; z-index: 1;" src="PvEW.png">
@@ -1098,9 +1104,9 @@ width: 40%; height: 20%;">
 <img id="HardPic" onclick="GoDifficulty(2)" class="BASE" style="left: 50%; top: 20%; width: 20%; visibility: visible;" src="BlueStar.png">
 <img id="HardPicGlow" onclick="" class="BASE" style="left: 50%; top: 20%; width: 20%; visibility: hidden;" src="BlueStarSelected.png">
 
-<label id="UIIntLabel" for="UIInt" style="visibility: visible; color: yellow;"><!--Poèítaè promıšlí pùltahù:-->Obtínost</label><BR>
+<label id="UIIntLabel" for="UIInt" style="visibility: visible; color: yellow;"><!--Poï¿½ï¿½taï¿½ promï¿½ï¿½lï¿½ pï¿½ltahï¿½:-->Obtï¿½nost</label><BR>
 <input id="UIInt" type="text" size="10" name="UIInt" value="6" style="visibility: hidden;"><BR>
-<label id="UITimeLabel" for="UITime" style="visibility: hidden;">Poèítaè pøemıšlí sekund:</label><BR>
+<label id="UITimeLabel" for="UITime" style="visibility: hidden;">Poï¿½ï¿½taï¿½ pï¿½emï¿½ï¿½lï¿½ sekund:</label><BR>
 <input id="UITime" type="text" size="10" name="UITime" value="10" style="visibility: hidden;"><BR>
 <img onclick=>
 </span>
@@ -1145,7 +1151,7 @@ onclick="CCChangeClick();">
 
 <!--<span ID="InfoMsg" style="left: 0%; top: 0%; position: absolute; padding: 0px; margin: 0px; visibility: hidden; z-index: 100;
 BACKGROUND-COLOR: yellow;">
-Poèítaè pøemıšlí
+Poï¿½ï¿½taï¿½ pï¿½emï¿½ï¿½lï¿½
 </span>       -->
 
 <span class="BASE" style="Z-INDEX: 0;
@@ -1181,7 +1187,7 @@ WIDTH: 100%; HEIGHT: 100%; TOP: 0px; LEFT: 0px; background-color: white;">
 <img onclick="location.reload();" class="BASE" style="left: 95%; top: 0%; width: 5%; height: 5%; z-index: 20;" src="exit.png">
 
 <img onclick="Back();" src="back.png" class="BASE" style="left: 92%; top: 92%; height: 6%; width: 6%; z-index: 20;">
-<font onclick="Back();" id="BackLabel" class="BASE" style="left: 93%; top: 93%; z-index: 21;">Zpìt</font>
+<font onclick="Back();" id="BackLabel" class="BASE" style="left: 93%; top: 93%; z-index: 21;">Zpï¿½t</font>
 
 <span id="SpanBoard" class="BASE" style="Z-INDEX: 0;
 WIDTH: 95%; HEIGHT: 95%; TOP: 0px; LEFT: 0px">

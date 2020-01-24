@@ -1,17 +1,16 @@
 <?php
-
-/*
-IFRAME:
-nevideno:<!--style="visibility: hidden; height: 0px; width: 0px;"-->
-debug:<!--width=500 height=500 style="left: 50%; top:50%; z-index: 50;"-->
-*/
-
 echo <<<index
 
 <HTML>
 <HEAD>
 <style type="text/css" media="tty"><![CDATA[/*<body>*/]]></style>
 <script>
+
+/*
+This work is distributed under a kind acknowledgement of the original author of the chess engine, TSCP, and so remains under a copyright (2019) by Tom Kerrigan.
+For more detail see http://www.tckerrigan.com/Chess/TSCP/
+*/
+
 function SetBasic()
 {
 //GameFrame.HideLang('cz');
